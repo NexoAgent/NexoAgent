@@ -1,26 +1,39 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --ink:       #0E2436;
+  --ink-2:     #41566B;
+  --muted:     #73869A;
+  --blue:      #2B82F0;
+  --teal:      #15B8C9;
+  --green:     #22B26B;
+  --grad:      linear-gradient(100deg, #2B82F0 0%, #15B8C9 52%, #22B26B 100%);
+  --bg:        #FFFFFF;
+  --bg-soft:   #F4F7FA;
+  --line:      #E2E9F0;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --font-sora:    var(--font-sora);
+  --font-jakarta: var(--font-jakarta);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-jakarta), "Plus Jakarta Sans", system-ui, sans-serif;
+}
+
+.font-sora    { font-family: var(--font-sora), "Sora", sans-serif; }
+.font-jakarta { font-family: var(--font-jakarta), "Plus Jakarta Sans", sans-serif; }
+
+.grad-text {
+  background: var(--grad);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.grad-bg {
+  background: var(--grad);
 }
