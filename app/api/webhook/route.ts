@@ -122,11 +122,14 @@ export async function POST(request: Request) {
       return twiml("Un agente humano revisará tu mensaje pronto.");
     }
 
-    const historial = await prisma.mensaje.findMany({
-      where: { conversacionId: conversacion.id },
-      orderBy: { creadoEn: "asc" },
-      take: 10,
-    });
+    // Obtiene los 10 mensajes MÁS RECIENTES y los ordena cronológicamente
+    const historial = (
+      await prisma.mensaje.findMany({
+        where: { conversacionId: conversacion.id },
+        orderBy: { creadoEn: "desc" },
+        take: 10,
+      })
+    ).reverse();
 
     // Busca los chunks más relevantes para la pregunta del cliente
     const todosLosChunks = await prisma.documentoChunk.findMany({
