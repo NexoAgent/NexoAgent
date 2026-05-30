@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { extractText } from "unpdf";
+import { trocear } from "@/lib/chunker";
 
 export async function POST(
   request: NextRequest,
@@ -32,17 +33,34 @@ export async function POST(
       return Response.json({ error: "Sin contenido" }, { status: 400 });
     }
 
+    const textoLimpio = contenido.trim();
+
+    // Crear el documento
     const documento = await prisma.documento.create({
       data: {
         empresaId: id,
         nombre: nombre || archivo?.name || "Documento sin nombre",
-        contenido: contenido.trim(),
+        contenido: textoLimpio,
         tipo,
       },
     });
 
-    return Response.json({ ok: true, id: documento.id });
-  } catch {
+    // Trocear y guardar los chunks
+    const fragmentos = trocear(textoLimpio);
+    if (fragmentos.length > 0) {
+      await prisma.documentoChunk.createMany({
+        data: fragmentos.map((contenido, indice) => ({
+          documentoId: documento.id,
+          empresaId: id,
+          contenido,
+          indice,
+        })),
+      });
+    }
+
+    return Response.json({ ok: true, id: documento.id, chunks: fragmentos.length });
+  } catch (err) {
+    console.error("Error procesando documento:", err);
     return Response.json({ error: "Error al procesar el archivo" }, { status: 500 });
   }
 }

@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { generarRespuesta } from "@/lib/claude";
+import { buscarRelevantes } from "@/lib/chunker";
 
 const FRASES_HUMANO = [
   "quiero hablar con una persona",
@@ -127,11 +128,21 @@ export async function POST(request: Request) {
       take: 10,
     });
 
+    // Busca los chunks más relevantes para la pregunta del cliente
+    const todosLosChunks = await prisma.documentoChunk.findMany({
+      where: { empresaId: empresa.id },
+      select: { id: true, contenido: true, indice: true },
+    });
+
+    const chunksRelevantes = buscarRelevantes(body, todosLosChunks);
+
     const respuestaIA = await generarRespuesta(
       empresa.nombre,
       historial,
       empresa.promptSistema,
-      empresa.documentos
+      chunksRelevantes.length > 0
+        ? [{ nombre: "Base de conocimiento", contenido: chunksRelevantes.join("\n\n---\n\n") }]
+        : empresa.documentos
     );
 
     await prisma.mensaje.create({

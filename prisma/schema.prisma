@@ -58,13 +58,24 @@ model Mensaje {
 }
 
 model Documento {
-  id          String   @id @default(cuid())
-  empresa     Empresa  @relation(fields: [empresaId], references: [id])
+  id          String            @id @default(cuid())
+  empresa     Empresa           @relation(fields: [empresaId], references: [id])
   empresaId   String
   nombre      String
   contenido   String
-  tipo        String   @default("texto")
-  creadoEn    DateTime @default(now())
+  tipo        String            @default("texto")
+  creadoEn    DateTime          @default(now())
+  chunks      DocumentoChunk[]
+}
+
+model DocumentoChunk {
+  id          String    @id @default(cuid())
+  documento   Documento @relation(fields: [documentoId], references: [id], onDelete: Cascade)
+  documentoId String
+  empresaId   String
+  contenido   String
+  indice      Int
+  creadoEn    DateTime  @default(now())
 }
 
 enum TipoContacto {
