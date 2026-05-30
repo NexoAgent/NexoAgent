@@ -79,13 +79,23 @@ export async function POST(request: Request) {
       return twiml("Hola, este servicio no está configurado todavía.");
     }
 
+    // Busca o crea el contacto en el CRM automáticamente
+    let contacto = await prisma.contacto.findUnique({
+      where: { empresaId_telefono: { empresaId: empresa.id, telefono: numeroCliente } },
+    });
+    if (!contacto) {
+      contacto = await prisma.contacto.create({
+        data: { empresaId: empresa.id, telefono: numeroCliente },
+      });
+    }
+
     let conversacion = await prisma.conversacion.findFirst({
       where: { empresaId: empresa.id, numeroCliente },
     });
 
     if (!conversacion) {
       conversacion = await prisma.conversacion.create({
-        data: { empresaId: empresa.id, numeroCliente },
+        data: { empresaId: empresa.id, numeroCliente, contactoId: contacto.id },
       });
     }
 

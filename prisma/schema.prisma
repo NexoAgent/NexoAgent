@@ -16,17 +16,35 @@ model Empresa {
   actualizadoEn      DateTime       @updatedAt
   conversaciones     Conversacion[]
   documentos         Documento[]
+  contactos          Contacto[]
+}
+
+model Contacto {
+  id             String         @id @default(cuid())
+  empresa        Empresa        @relation(fields: [empresaId], references: [id])
+  empresaId      String
+  nombre         String?
+  telefono       String
+  tipo           TipoContacto   @default(LEAD)
+  notas          String?
+  creadoEn       DateTime       @default(now())
+  actualizadoEn  DateTime       @updatedAt
+  conversaciones Conversacion[]
+
+  @@unique([empresaId, telefono])
 }
 
 model Conversacion {
-  id             String     @id @default(cuid())
-  empresa        Empresa    @relation(fields: [empresaId], references: [id])
+  id             String       @id @default(cuid())
+  empresa        Empresa      @relation(fields: [empresaId], references: [id])
   empresaId      String
+  contacto       Contacto?    @relation(fields: [contactoId], references: [id])
+  contactoId     String?
   numeroCliente  String
-  estado         Estado     @default(ACTIVA)
-  modoHumano     Boolean    @default(false)
-  creadoEn       DateTime   @default(now())
-  actualizadoEn  DateTime   @updatedAt
+  estado         Estado       @default(ACTIVA)
+  modoHumano     Boolean      @default(false)
+  creadoEn       DateTime     @default(now())
+  actualizadoEn  DateTime     @updatedAt
   mensajes       Mensaje[]
 }
 
@@ -47,6 +65,12 @@ model Documento {
   contenido   String
   tipo        String   @default("texto")
   creadoEn    DateTime @default(now())
+}
+
+enum TipoContacto {
+  LEAD
+  CLIENTE
+  PROVEEDOR
 }
 
 enum Estado {
