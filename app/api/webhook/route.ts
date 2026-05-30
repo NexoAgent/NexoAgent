@@ -17,6 +17,25 @@ function solicitaHumano(mensaje: string): boolean {
   return FRASES_HUMANO.some((frase) => lower.includes(frase));
 }
 
+// Elimina caracteres Unicode fuera del rango Latin-1 (>255) que rompen TwiML
+function limpiar(texto: string): string {
+  let resultado = "";
+  for (const char of texto) {
+    if (char.charCodeAt(0) <= 255) {
+      resultado += char;
+    }
+  }
+  return resultado.trim();
+}
+
+function twiml(mensaje: string): Response {
+  const xml = `<?xml version="1.0" encoding="UTF-8"?><Response><Message>${limpiar(mensaje)}</Message></Response>`;
+  return new Response(xml, {
+    status: 200,
+    headers: { "Content-Type": "text/xml; charset=utf-8" },
+  });
+}
+
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const mode = url.searchParams.get("hub.mode");
@@ -59,7 +78,6 @@ export async function POST(request: Request) {
       return twiml("Hola, este servicio no está configurado todavía.");
     }
 
-    // Busca o crea la conversación
     let conversacion = await prisma.conversacion.findFirst({
       where: { empresaId: empresa.id, numeroCliente },
     });
@@ -70,7 +88,6 @@ export async function POST(request: Request) {
       });
     }
 
-    // Guarda el mensaje del cliente
     await prisma.mensaje.create({
       data: {
         conversacionId: conversacion.id,
@@ -79,7 +96,6 @@ export async function POST(request: Request) {
       },
     });
 
-    // Si el cliente pide hablar con humano, activar modo humano
     if (solicitaHumano(body)) {
       await prisma.conversacion.update({
         where: { id: conversacion.id },
@@ -90,19 +106,16 @@ export async function POST(request: Request) {
       );
     }
 
-    // Si ya está en modo humano, no responder con IA
     if (conversacion.modoHumano) {
       return twiml("Un agente humano revisará tu mensaje pronto.");
     }
 
-    // Obtiene el historial reciente (últimos 10 mensajes)
     const historial = await prisma.mensaje.findMany({
       where: { conversacionId: conversacion.id },
       orderBy: { creadoEn: "asc" },
       take: 10,
     });
 
-    // Genera respuesta con Claude usando el prompt y documentos de la empresa
     const respuestaIA = await generarRespuesta(
       empresa.nombre,
       historial,
@@ -110,7 +123,6 @@ export async function POST(request: Request) {
       empresa.documentos
     );
 
-    // Guarda la respuesta del asistente
     await prisma.mensaje.create({
       data: {
         conversacionId: conversacion.id,
@@ -126,11 +138,4 @@ export async function POST(request: Request) {
     console.error("Error en webhook:", error);
     return twiml("Lo siento, ocurrió un error. Intenta de nuevo.");
   }
-}
-
-function twiml(mensaje: string): Response {
-  return new Response(
-    `<?xml version="1.0" encoding="UTF-8"?><Response><Message>${mensaje}</Message></Response>`,
-    { status: 200, headers: { "Content-Type": "text/xml" } }
-  );
 }
