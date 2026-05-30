@@ -1,7 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
-import { actualizarPrompt, editarEmpresa, eliminarEmpresa } from "@/app/actions/empresas";
+import { actualizarPrompt, editarEmpresa } from "@/app/actions/empresas";
 import DocumentosPanel from "./DocumentosPanel";
+import EliminarEmpresa from "./EliminarEmpresa";
 
 export default async function EmpresaConfiguracionPage({
   params,
@@ -107,23 +108,7 @@ export default async function EmpresaConfiguracionPage({
         <p className="text-xs mb-5" style={{ color: "#73869A" }}>
           Eliminar esta empresa borrará todas sus conversaciones, mensajes y documentos. Esta acción no se puede deshacer.
         </p>
-        <form
-          action={eliminarEmpresa}
-          onSubmit={(e) => {
-            if (!confirm(`¿Seguro que quieres eliminar "${empresa.nombre}"? Se borrarán todos sus datos permanentemente.`)) {
-              e.preventDefault();
-            }
-          }}
-        >
-          <input type="hidden" name="id" value={empresa.id} />
-          <button
-            type="submit"
-            className="text-sm font-medium py-2 px-5 rounded-lg transition-colors hover:bg-red-600 hover:text-white"
-            style={{ border: "1px solid #FECACA", color: "#DC2626" }}
-          >
-            Eliminar empresa
-          </button>
-        </form>
+        <EliminarEmpresa id={empresa.id} nombre={empresa.nombre} />
       </div>
     </div>
   );
