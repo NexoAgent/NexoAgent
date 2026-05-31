@@ -173,7 +173,7 @@ function NuevaAutomatizacionForm({ empresaId }: { empresaId: string }) {
       <div>
         <label className="block text-xs font-medium mb-1.5" style={{ color: "#41566B" }}>Mensaje a enviar</label>
         <textarea name="mensaje" required rows={4}
-          placeholder="Ej: ¡Hola! 👋 Gracias por contactar a [Empresa]. En breve te atendemos."
+          placeholder="Ej: ¡Hola! Soy Katy 😊 ¿En qué te puedo ayudar hoy?"
           className="w-full rounded-lg px-3 py-2.5 text-sm focus:outline-none resize-none"
           style={{ border: "1px solid #E2E9F0", color: "#0E2436" }} />
       </div>
