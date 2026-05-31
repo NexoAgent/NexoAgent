@@ -3,6 +3,7 @@ import { generarRespuesta } from "@/lib/claude";
 import { buscarRelevantes } from "@/lib/chunker";
 import { evaluarAutomatizaciones } from "@/lib/automatizaciones";
 import { setCredentials, createEvent } from "@/lib/google-calendar";
+import { verificarDisponibilidad, sugerirHorarios } from "@/lib/disponibilidad";
 
 const FRASES_HUMANO = [
   "quiero hablar con una persona",
@@ -182,9 +183,92 @@ export async function POST(request: Request) {
       empresa.memoria
     );
 
-    // Si el agente creó una cita, guardarla en la BD
+    // Si el agente quiere verificar disponibilidad
+    if (resultado.tool?.tipo === "verificar_disponibilidad") {
+      const { fecha, hora, duracion, preferencia } = resultado.tool;
+
+      if (hora) {
+        // Verificar hora específica
+        const { disponible, conflictos } = await verificarDisponibilidad(
+          empresa.id,
+          fecha,
+          hora,
+          duracion
+        );
+
+        let respuestaDisponibilidad: string;
+        if (disponible) {
+          respuestaDisponibilidad = `✅ Perfecto, el ${fecha} a las ${hora} está disponible. ¿Confirmas esta cita?`;
+        } else {
+          respuestaDisponibilidad = `❌ Lo siento, el ${fecha} a las ${hora} ya está ocupado (${conflictos.join(", ")}). ¿Te gustaría otro horario?`;
+        }
+
+        await prisma.mensaje.create({
+          data: {
+            conversacionId: conversacion.id,
+            contenido: respuestaDisponibilidad,
+            rol: "ASISTENTE",
+          },
+        });
+
+        return twiml(respuestaDisponibilidad);
+      } else {
+        // Sugerir horarios disponibles
+        const sugerencias = await sugerirHorarios(empresa.id, fecha, duracion, preferencia);
+
+        let respuestaSugerencias: string;
+        if (sugerencias.length > 0) {
+          respuestaSugerencias = `Tengo disponibilidad el ${fecha} a las: ${sugerencias.join(", ")}. ¿Cuál te viene mejor?`;
+        } else {
+          respuestaSugerencias = `Lo siento, no tengo disponibilidad el ${fecha}. ¿Te gustaría otro día?`;
+        }
+
+        await prisma.mensaje.create({
+          data: {
+            conversacionId: conversacion.id,
+            contenido: respuestaSugerencias,
+            rol: "ASISTENTE",
+          },
+        });
+
+        return twiml(respuestaSugerencias);
+      }
+    }
+
+    // Si el agente creó una cita, verificar disponibilidad primero
     if (resultado.tool?.tipo === "crear_cita") {
       const { nombreCliente, telefono, fecha, hora, duracion, notas } = resultado.tool;
+
+      // Verificar disponibilidad antes de crear
+      const { disponible, conflictos } = await verificarDisponibilidad(
+        empresa.id,
+        fecha,
+        hora,
+        duracion
+      );
+
+      if (!disponible) {
+        // Rechazar la cita y sugerir alternativas
+        const sugerencias = await sugerirHorarios(empresa.id, fecha, duracion);
+        let respuestaConflicto = `Lo siento ${nombreCliente}, el ${fecha} a las ${hora} ya está ocupado.`;
+
+        if (sugerencias.length > 0) {
+          respuestaConflicto += ` ¿Te vendría bien a las ${sugerencias.join(" o a las ")}?`;
+        } else {
+          respuestaConflicto += ` ¿Te gustaría otro día?`;
+        }
+
+        await prisma.mensaje.create({
+          data: {
+            conversacionId: conversacion.id,
+            contenido: respuestaConflicto,
+            rol: "ASISTENTE",
+          },
+        });
+
+        console.log(`⚠️ Cita rechazada por conflicto: ${fecha} ${hora}`);
+        return twiml(respuestaConflicto);
+      }
 
       // Combinar fecha y hora
       const fechaHora = new Date(`${fecha}T${hora}:00`);

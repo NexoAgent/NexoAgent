@@ -53,6 +53,12 @@ export type ToolResult = {
   hora: string;
   duracion: number;
   notas?: string;
+} | {
+  tipo: "verificar_disponibilidad";
+  fecha: string;
+  hora?: string;
+  duracion: number;
+  preferencia?: "mañana" | "tarde" | "noche";
 } | null;
 
 export async function generarRespuesta(
@@ -86,8 +92,35 @@ Si no sabes algo específico del negocio, ofrece conectar al cliente con un agen
 
   const tools: Anthropic.Tool[] = [
     {
+      name: "verificar_disponibilidad",
+      description: "Verifica si hay disponibilidad en una fecha/hora específica o sugiere horarios disponibles. ÚSALA PRIMERO antes de crear una cita para evitar conflictos de horario.",
+      input_schema: {
+        type: "object" as const,
+        properties: {
+          fecha: {
+            type: "string",
+            description: "Fecha en formato YYYY-MM-DD (ej: 2026-06-01)",
+          },
+          hora: {
+            type: "string",
+            description: "Hora específica en formato HH:MM 24h (ej: 14:30). Opcional si solo quieres ver disponibilidad general.",
+          },
+          duracion: {
+            type: "number",
+            description: "Duración estimada en minutos (default: 60)",
+          },
+          preferencia: {
+            type: "string",
+            enum: ["mañana", "tarde", "noche"],
+            description: "Preferencia horaria del cliente: mañana (8-12), tarde (12-18), noche (18+)",
+          },
+        },
+        required: ["fecha"],
+      },
+    },
+    {
       name: "crear_cita",
-      description: "Crea una cita o tarea en el calendario cuando el cliente solicita agendar una reunión, servicio, entrega o cualquier otro compromiso. Úsala SOLO cuando el cliente confirme fecha y hora específicas.",
+      description: "Crea una cita o tarea en el calendario. IMPORTANTE: Verifica disponibilidad primero con verificar_disponibilidad. Solo úsala después de confirmar que hay disponibilidad.",
       input_schema: {
         type: "object" as const,
         properties: {
@@ -132,34 +165,61 @@ Si no sabes algo específico del negocio, ofrece conectar al cliente con un agen
   // Verificar si Claude quiere usar una tool
   const toolUse = respuesta.content.find((block) => block.type === "tool_use");
 
-  if (toolUse && toolUse.type === "tool_use" && toolUse.name === "crear_cita") {
-    const input = toolUse.input as {
-      nombreCliente: string;
-      telefono: string;
-      fecha: string;
-      hora: string;
-      duracion?: number;
-      notas?: string;
-    };
+  if (toolUse && toolUse.type === "tool_use") {
+    if (toolUse.name === "verificar_disponibilidad") {
+      const input = toolUse.input as {
+        fecha: string;
+        hora?: string;
+        duracion?: number;
+        preferencia?: "mañana" | "tarde" | "noche";
+      };
 
-    // Obtener el texto de respuesta si existe
-    const textoBloque = respuesta.content.find((b) => b.type === "text");
-    const textoRespuesta = textoBloque && textoBloque.type === "text"
-      ? textoBloque.text
-      : `Perfecto, he agendado tu cita para el ${input.fecha} a las ${input.hora}. Te llegará una confirmación.`;
+      const textoBloque = respuesta.content.find((b) => b.type === "text");
+      const textoRespuesta = textoBloque && textoBloque.type === "text"
+        ? textoBloque.text
+        : "Déjame verificar la disponibilidad...";
 
-    return {
-      respuesta: textoRespuesta,
-      tool: {
-        tipo: "crear_cita",
-        nombreCliente: input.nombreCliente,
-        telefono: input.telefono,
-        fecha: input.fecha,
-        hora: input.hora,
-        duracion: input.duracion || 60,
-        notas: input.notas,
-      },
-    };
+      return {
+        respuesta: textoRespuesta,
+        tool: {
+          tipo: "verificar_disponibilidad",
+          fecha: input.fecha,
+          hora: input.hora,
+          duracion: input.duracion || 60,
+          preferencia: input.preferencia,
+        },
+      };
+    }
+
+    if (toolUse.name === "crear_cita") {
+      const input = toolUse.input as {
+        nombreCliente: string;
+        telefono: string;
+        fecha: string;
+        hora: string;
+        duracion?: number;
+        notas?: string;
+      };
+
+      // Obtener el texto de respuesta si existe
+      const textoBloque = respuesta.content.find((b) => b.type === "text");
+      const textoRespuesta = textoBloque && textoBloque.type === "text"
+        ? textoBloque.text
+        : `Perfecto, he agendado tu cita para el ${input.fecha} a las ${input.hora}. Te llegará una confirmación.`;
+
+      return {
+        respuesta: textoRespuesta,
+        tool: {
+          tipo: "crear_cita",
+          nombreCliente: input.nombreCliente,
+          telefono: input.telefono,
+          fecha: input.fecha,
+          hora: input.hora,
+          duracion: input.duracion || 60,
+          notas: input.notas,
+        },
+      };
+    }
   }
 
   const bloque = respuesta.content[0];
