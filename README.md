@@ -10,6 +10,7 @@ NexoAgent es un sistema completo de asistentes virtuales potenciados por IA (Cla
 > - [🔒 Seguridad](SECURITY.md)
 > - [🤖 Agente Automático](AGENTE-AUTOMATICO.md) ← **NUEVO**
 > - [📅 Setup Google Calendar](GOOGLE-CALENDAR-SETUP.md) ← **NUEVO**
+> - [⏰ Validación de Horarios](VALIDACION-HORARIOS.md) ← **NUEVO**
 
 ---
 
@@ -47,6 +48,8 @@ NexoAgent es un sistema completo de asistentes virtuales potenciados por IA (Cla
 
 ### 📅 **Agenda de Citas/Tareas** ⭐ **NUEVO**
 - **🤖 Creación automática por IA**: El agente crea citas cuando el cliente las solicita por WhatsApp
+- **⏰ Validación inteligente**: Previene duplicados y conflictos de horario automáticamente
+- **💡 Sugerencias optimizadas**: Propone horarios disponibles según preferencia (mañana/tarde/noche)
 - **📅 Integración con Google Calendar**: Sincronización bidireccional completa
 - **✅ Gestión completa**: Crear, confirmar, cancelar citas desde el dashboard
 - **🔗 Enlaces directos**: Cada cita tiene link a Google Calendar
