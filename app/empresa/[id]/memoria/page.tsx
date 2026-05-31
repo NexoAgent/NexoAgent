@@ -22,7 +22,6 @@ export default async function MemoriaPage({
   if (!session || session.user.rol !== "PROVEEDOR") {
     redirect(`/empresa/${id}`);
   }
-  const { id } = await params;
 
   const entradas = await prisma.memoriaEmpresa.findMany({
     where: { empresaId: id },
