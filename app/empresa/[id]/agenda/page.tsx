@@ -88,15 +88,15 @@ export default async function AgendaPage({
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-white p-4 rounded-lg shadow border-l-4 border-blue-500">
-          <p className="text-sm text-gray-600">Citas hoy</p>
+          <p className="text-sm text-gray-600">Citas/Tareas hoy</p>
           <p className="text-3xl font-bold text-blue-600">{citasHoy}</p>
         </div>
         <div className="bg-white p-4 rounded-lg shadow border-l-4 border-green-500">
-          <p className="text-sm text-gray-600">Próximas citas</p>
+          <p className="text-sm text-gray-600">Próximas citas/tareas</p>
           <p className="text-3xl font-bold text-green-600">{citasProximas}</p>
         </div>
         <div className="bg-white p-4 rounded-lg shadow border-l-4 border-purple-500">
-          <p className="text-sm text-gray-600">Total de citas</p>
+          <p className="text-sm text-gray-600">Total de citas/tareas</p>
           <p className="text-3xl font-bold text-purple-600">{citas.length}</p>
         </div>
       </div>
@@ -116,7 +116,7 @@ export default async function AgendaPage({
               <div className="flex-1">
                 <p className="font-medium text-green-900">Conectado a Google Calendar</p>
                 <p className="text-sm text-green-700">
-                  Las citas se sincronizarán automáticamente con tu calendario de Google
+                  Las citas/tareas se sincronizarán automáticamente con tu calendario de Google
                 </p>
               </div>
             </div>
@@ -133,11 +133,11 @@ export default async function AgendaPage({
         ) : (
           <div className="space-y-4">
             <p className="text-gray-700">
-              Conecta tu cuenta de Google para sincronizar automáticamente las citas con Google Calendar.
+              Conecta tu cuenta de Google para sincronizar automáticamente las citas/tareas con Google Calendar.
               Esto te permitirá:
             </p>
             <ul className="list-disc list-inside space-y-2 text-gray-600 text-sm">
-              <li>Ver todas tus citas en tu calendario personal</li>
+              <li>Ver todas tus citas/tareas en tu calendario personal</li>
               <li>Recibir notificaciones y recordatorios de Google</li>
               <li>Compartir tu disponibilidad con otros</li>
               <li>Acceder desde cualquier dispositivo</li>
@@ -160,7 +160,7 @@ export default async function AgendaPage({
 
       {/* Formulario para nueva cita */}
       <div className="bg-white p-6 rounded-lg shadow">
-        <h2 className="text-xl font-semibold mb-4">➕ Agendar nueva cita</h2>
+        <h2 className="text-xl font-semibold mb-4">➕ Agendar nueva cita/tarea</h2>
         <form action={crearCita} className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <input type="hidden" name="empresaId" value={id} />
 
@@ -235,7 +235,7 @@ export default async function AgendaPage({
               type="submit"
               className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium"
             >
-              Crear cita
+              Crear cita/tarea
             </button>
           </div>
         </form>
@@ -245,7 +245,7 @@ export default async function AgendaPage({
       {citasFuturas.length > 0 && (
         <div className="bg-white p-6 rounded-lg shadow">
           <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-            🔜 Próximas citas ({citasFuturas.length})
+            🔜 Próximas citas/tareas ({citasFuturas.length})
           </h2>
           <div className="space-y-3">
             {citasFuturas.map((cita) => (
@@ -357,11 +357,11 @@ export default async function AgendaPage({
         </div>
       )}
 
-      {/* Citas canceladas */}
+      {/* Citas/Tareas canceladas */}
       {citasCanceladas.length > 0 && (
         <details className="bg-white p-6 rounded-lg shadow">
           <summary className="text-lg font-semibold cursor-pointer text-gray-700 hover:text-gray-900">
-            ❌ Citas canceladas ({citasCanceladas.length})
+            ❌ Citas/Tareas canceladas ({citasCanceladas.length})
           </summary>
           <div className="mt-4 space-y-2">
             {citasCanceladas.slice(0, 10).map((cita) => (
@@ -381,9 +381,9 @@ export default async function AgendaPage({
 
       {citas.length === 0 && (
         <div className="bg-white p-12 rounded-lg shadow text-center">
-          <p className="text-gray-500 text-lg">No hay citas agendadas aún</p>
+          <p className="text-gray-500 text-lg">No hay citas/tareas agendadas aún</p>
           <p className="text-sm text-gray-400 mt-2">
-            Crea tu primera cita usando el formulario de arriba
+            Crea tu primera cita/tarea usando el formulario de arriba
           </p>
         </div>
       )}

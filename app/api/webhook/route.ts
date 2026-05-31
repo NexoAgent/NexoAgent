@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { generarRespuesta } from "@/lib/claude";
 import { buscarRelevantes } from "@/lib/chunker";
 import { evaluarAutomatizaciones } from "@/lib/automatizaciones";
+import { setCredentials, createEvent } from "@/lib/google-calendar";
 
 const FRASES_HUMANO = [
   "quiero hablar con una persona",
@@ -171,7 +172,7 @@ export async function POST(request: Request) {
 
     const chunksRelevantes = buscarRelevantes(body, todosLosChunks);
 
-    const respuestaIA = await generarRespuesta(
+    const resultado = await generarRespuesta(
       empresa.nombre,
       historial,
       empresa.promptSistema,
@@ -181,17 +182,79 @@ export async function POST(request: Request) {
       empresa.memoria
     );
 
+    // Si el agente creó una cita, guardarla en la BD
+    if (resultado.tool?.tipo === "crear_cita") {
+      const { nombreCliente, telefono, fecha, hora, duracion, notas } = resultado.tool;
+
+      // Combinar fecha y hora
+      const fechaHora = new Date(`${fecha}T${hora}:00`);
+      const fin = new Date(fechaHora.getTime() + duracion * 60 * 1000);
+
+      // Buscar o crear contacto
+      let contacto = await prisma.contacto.findUnique({
+        where: { empresaId_telefono: { empresaId: empresa.id, telefono } },
+      });
+
+      if (!contacto) {
+        contacto = await prisma.contacto.create({
+          data: {
+            empresaId: empresa.id,
+            telefono,
+            nombre: nombreCliente,
+          },
+        });
+      }
+
+      // Crear evento en Google Calendar si está conectado
+      let googleEventId: string | null = null;
+      let googleCalendarLink: string | null = null;
+
+      if (empresa.googleAccessToken && empresa.googleCalendarId) {
+        try {
+          const auth = setCredentials(empresa.googleAccessToken, empresa.googleRefreshToken || undefined);
+          const event = await createEvent(auth, empresa.googleCalendarId, {
+            summary: `Cita/Tarea: ${nombreCliente}`,
+            description: `Tel: ${telefono}\n${notas || "Agendado por WhatsApp"}`,
+            start: fechaHora,
+            end: fin,
+          });
+          googleEventId = event.id;
+          googleCalendarLink = event.link;
+          console.log(`✅ Evento creado en Google Calendar: ${event.link}`);
+        } catch (error) {
+          console.error("Error creando evento en Google Calendar:", error);
+        }
+      }
+
+      // Crear la cita
+      await prisma.cita.create({
+        data: {
+          empresaId: empresa.id,
+          contactoId: contacto.id,
+          nombreCliente,
+          telefono,
+          inicio: fechaHora,
+          fin,
+          notas: notas || `Agendado por WhatsApp`,
+          googleEventId,
+          googleCalendarLink,
+        },
+      });
+
+      console.log(`📅 Cita creada automáticamente: ${nombreCliente} - ${fecha} ${hora}`);
+    }
+
     await prisma.mensaje.create({
       data: {
         conversacionId: conversacion.id,
-        contenido: respuestaIA,
+        contenido: resultado.respuesta,
         rol: "ASISTENTE",
       },
     });
 
-    console.log(`🤖 Respuesta IA: ${respuestaIA}`);
+    console.log(`🤖 Respuesta IA: ${resultado.respuesta}`);
 
-    return twiml(respuestaIA);
+    return twiml(resultado.respuesta);
   } catch (error) {
     console.error("Error en webhook:", error);
     return twiml("Lo siento, ocurrió un error. Intenta de nuevo.");
