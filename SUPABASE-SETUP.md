@@ -60,16 +60,30 @@ DIRECT_URL=postgresql://postgres.[project-ref]:[YOUR-PASSWORD]@aws-0-[region].po
 
 ## ⚙️ Actualizar Configuración de Prisma
 
-### 1. Actualizar `prisma/schema.prisma`
+### 1. Configuración de Prisma (Prisma 7)
 
-Agrega la variable `directUrl` para migraciones:
+**NOTA:** En Prisma 7, las URLs de base de datos se configuran en `prisma.config.ts`, no en `schema.prisma`.
+
+El `schema.prisma` debe tener solo:
 
 ```prisma
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider = "postgresql"
 }
+```
+
+Y el `prisma.config.ts` maneja las conexiones:
+
+```typescript
+import "dotenv/config";
+import { defineConfig } from "prisma/config";
+
+export default defineConfig({
+  schema: "prisma/schema.prisma",
+  datasource: {
+    url: process.env["DATABASE_URL"],  // Connection Pooling
+  },
+});
 ```
 
 ### 2. Verificar que el schema esté correcto

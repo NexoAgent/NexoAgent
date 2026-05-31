@@ -1,7 +1,11 @@
 import { PrismaClient } from "../app/generated/prisma/client";
+import { PrismaPg } from "@prisma/adapter-pg";
+import { Pool } from "pg";
 import bcrypt from "bcryptjs";
 
-const prisma = new PrismaClient();
+const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+const adapter = new PrismaPg(pool);
+const prisma = new PrismaClient({ adapter });
 
 async function main() {
   console.log("🌱 Sembrando base de datos de producción...");
@@ -89,23 +93,22 @@ Siempre respondes en español de forma clara y concisa.`,
     },
   ];
 
-  for (const memoria of memorias) {
-    await prisma.memoriaEmpresa.upsert({
-      where: {
-        empresaId_categoria_clave: {
+  // Verificar si ya existen memorias
+  const memoriasExistentes = await prisma.memoriaEmpresa.findMany({
+    where: { empresaId: empresa.id },
+  });
+
+  if (memoriasExistentes.length === 0) {
+    for (const memoria of memorias) {
+      await prisma.memoriaEmpresa.create({
+        data: {
           empresaId: empresa.id,
           categoria: memoria.categoria,
           clave: memoria.clave,
+          valor: memoria.valor,
         },
-      },
-      update: {},
-      create: {
-        empresaId: empresa.id,
-        categoria: memoria.categoria,
-        clave: memoria.clave,
-        valor: memoria.valor,
-      },
-    });
+      });
+    }
   }
 
   console.log("✅ Memoria estructurada inicial creada:");
