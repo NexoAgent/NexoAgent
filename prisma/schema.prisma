@@ -8,35 +8,41 @@ datasource db {
 }
 
 model Empresa {
-  id                 String         @id @default(cuid())
-  nombre             String
-  telefonoWhatsapp   String         @unique
-  promptSistema      String?
-  calendlyUrl        String?
-  creadoEn           DateTime       @default(now())
-  actualizadoEn      DateTime       @updatedAt
-  conversaciones     Conversacion[]
-  documentos         Documento[]
-  contactos          Contacto[]
-  memoria            MemoriaEmpresa[]
-  automatizaciones   Automatizacion[]
-  citas              Cita[]
+  id                      String         @id @default(cuid())
+  nombre                  String
+  telefonoWhatsapp        String         @unique
+  promptSistema           String?
+  calendlyUrl             String?
+  googleCalendarId        String?
+  googleRefreshToken      String?
+  googleAccessToken       String?
+  googleTokenExpiry       DateTime?
+  creadoEn                DateTime       @default(now())
+  actualizadoEn           DateTime       @updatedAt
+  conversaciones          Conversacion[]
+  documentos              Documento[]
+  contactos               Contacto[]
+  memoria                 MemoriaEmpresa[]
+  automatizaciones        Automatizacion[]
+  citas                   Cita[]
 }
 
 model Cita {
-  id            String     @id @default(cuid())
-  empresa       Empresa    @relation(fields: [empresaId], references: [id])
-  empresaId     String
-  contacto      Contacto?  @relation(fields: [contactoId], references: [id])
-  contactoId    String?
-  nombreCliente String
-  telefono      String
-  inicio        DateTime
-  fin           DateTime
-  estado        EstadoCita @default(PENDIENTE)
-  notas         String?
-  creadoEn      DateTime   @default(now())
-  actualizadoEn DateTime   @updatedAt
+  id                 String     @id @default(cuid())
+  empresa            Empresa    @relation(fields: [empresaId], references: [id])
+  empresaId          String
+  contacto           Contacto?  @relation(fields: [contactoId], references: [id])
+  contactoId         String?
+  nombreCliente      String
+  telefono           String
+  inicio             DateTime
+  fin                DateTime
+  estado             EstadoCita @default(PENDIENTE)
+  notas              String?
+  googleEventId      String?
+  googleCalendarLink String?
+  creadoEn           DateTime   @default(now())
+  actualizadoEn      DateTime   @updatedAt
 }
 
 enum EstadoCita {
