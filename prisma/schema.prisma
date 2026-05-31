@@ -12,6 +12,7 @@ model Empresa {
   nombre             String
   telefonoWhatsapp   String         @unique
   promptSistema      String?
+  calendlyUrl        String?
   creadoEn           DateTime       @default(now())
   actualizadoEn      DateTime       @updatedAt
   conversaciones     Conversacion[]
@@ -19,6 +20,29 @@ model Empresa {
   contactos          Contacto[]
   memoria            MemoriaEmpresa[]
   automatizaciones   Automatizacion[]
+  citas              Cita[]
+}
+
+model Cita {
+  id            String     @id @default(cuid())
+  empresa       Empresa    @relation(fields: [empresaId], references: [id])
+  empresaId     String
+  contacto      Contacto?  @relation(fields: [contactoId], references: [id])
+  contactoId    String?
+  nombreCliente String
+  telefono      String
+  inicio        DateTime
+  fin           DateTime
+  estado        EstadoCita @default(PENDIENTE)
+  notas         String?
+  creadoEn      DateTime   @default(now())
+  actualizadoEn DateTime   @updatedAt
+}
+
+enum EstadoCita {
+  PENDIENTE
+  CONFIRMADA
+  CANCELADA
 }
 
 model MemoriaEmpresa {
@@ -70,6 +94,7 @@ model Contacto {
   creadoEn       DateTime       @default(now())
   actualizadoEn  DateTime       @updatedAt
   conversaciones Conversacion[]
+  citas          Cita[]
 
   @@unique([empresaId, telefono])
 }
