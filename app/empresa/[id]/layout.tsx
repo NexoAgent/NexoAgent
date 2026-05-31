@@ -4,6 +4,7 @@ import { logout } from "@/app/actions/auth";
 import Link from "next/link";
 import Image from "next/image";
 import { notFound, redirect } from "next/navigation";
+import MobileMenu from "@/app/components/MobileMenu";
 
 type NavItem = {
   href: string;
@@ -63,9 +64,32 @@ export default async function EmpresaLayout({
     return true;
   });
 
+  // Preparar items para el menú móvil
+  const mobileNavItems = navFiltrada.map((item) => ({
+    href: item.href,
+    label: item.label,
+    icon: item.icon,
+    badge: item.label === "Conversaciones" ? pendientes : undefined,
+  }));
+
   return (
     <div className="min-h-screen flex" style={{ background: "#F4F7FA" }}>
-      <aside className="w-60 flex flex-col fixed h-full bg-white shadow-lg" style={{ borderRight: "2px solid #10B981", boxShadow: "4px 0 12px rgba(16, 185, 129, 0.1)" }}>
+      {/* Mobile Menu Component */}
+      <MobileMenu
+        navItems={mobileNavItems}
+        empresaId={id}
+        userName={session.user.name || "Usuario"}
+        userRole={session.user.rol}
+        empresaNombre={empresa.nombre}
+        empresaInicial={empresa.nombre[0]}
+        onLogout={async () => {
+          "use server";
+          await logout();
+        }}
+      />
+
+      {/* Desktop Sidebar - Hidden on mobile */}
+      <aside className="hidden lg:flex w-60 flex-col fixed h-full bg-white shadow-lg" style={{ borderRight: "2px solid #10B981", boxShadow: "4px 0 12px rgba(16, 185, 129, 0.1)" }}>
         {/* Logo + empresa */}
         <div className="px-5 py-5" style={{ borderBottom: "1px solid #E5E7EB" }}>
           <Link href="/admin" className="flex items-center gap-1.5 mb-4 text-gray-500 hover:text-gray-700 transition-colors">
@@ -145,8 +169,9 @@ export default async function EmpresaLayout({
         </div>
       </aside>
 
-      <main className="flex-1 ml-60">
-        <div className="max-w-4xl mx-auto px-8 py-8">{children}</div>
+      {/* Main Content - Responsive */}
+      <main className="flex-1 lg:ml-60 pt-16 lg:pt-0">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8">{children}</div>
       </main>
     </div>
   );
