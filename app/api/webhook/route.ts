@@ -198,9 +198,9 @@ export async function POST(request: Request) {
 
         let respuestaDisponibilidad: string;
         if (disponible) {
-          respuestaDisponibilidad = `✅ Perfecto, el ${fecha} a las ${hora} está disponible. ¿Confirmas esta cita?`;
+          respuestaDisponibilidad = `Perfecto, el ${fecha} a las ${hora} sí está disponible 😊 ¿Me confirmas tu nombre para apartar el horario?`;
         } else {
-          respuestaDisponibilidad = `❌ Lo siento, el ${fecha} a las ${hora} ya está ocupado (${conflictos.join(", ")}). ¿Te gustaría otro horario?`;
+          respuestaDisponibilidad = `Ay, justo a las ${hora} ya tengo ocupado ese día 😅 ¿Te vendría bien en otro horario?`;
         }
 
         await prisma.mensaje.create({
@@ -218,9 +218,16 @@ export async function POST(request: Request) {
 
         let respuestaSugerencias: string;
         if (sugerencias.length > 0) {
-          respuestaSugerencias = `Tengo disponibilidad el ${fecha} a las: ${sugerencias.join(", ")}. ¿Cuál te viene mejor?`;
+          const horariosFormateados = sugerencias.map(h => {
+            const [hora, min] = h.split(':');
+            const horaNum = parseInt(hora);
+            if (horaNum < 12) return `${h} (mañana)`;
+            if (horaNum < 18) return `${h} (tarde)`;
+            return `${h} (noche)`;
+          });
+          respuestaSugerencias = `Mira, tengo libre el ${fecha} a las ${horariosFormateados.join(', o a las ')}. ¿Cuál te acomoda mejor?`;
         } else {
-          respuestaSugerencias = `Lo siento, no tengo disponibilidad el ${fecha}. ¿Te gustaría otro día?`;
+          respuestaSugerencias = `Uy, ese día está full 😅 ¿Te sirve otro día?`;
         }
 
         await prisma.mensaje.create({
@@ -250,12 +257,12 @@ export async function POST(request: Request) {
       if (!disponible) {
         // Rechazar la cita y sugerir alternativas
         const sugerencias = await sugerirHorarios(empresa.id, fecha, duracion);
-        let respuestaConflicto = `Lo siento ${nombreCliente}, el ${fecha} a las ${hora} ya está ocupado.`;
+        let respuestaConflicto = `${nombreCliente}, justo a esa hora ya tengo ocupado 😅`;
 
         if (sugerencias.length > 0) {
-          respuestaConflicto += ` ¿Te vendría bien a las ${sugerencias.join(" o a las ")}?`;
+          respuestaConflicto += ` Pero tengo libre a las ${sugerencias.join(" o a las ")}. ¿Te sirve alguno?`;
         } else {
-          respuestaConflicto += ` ¿Te gustaría otro día?`;
+          respuestaConflicto += ` ¿Qué tal otro día? Dime cuándo y lo revisamos.`;
         }
 
         await prisma.mensaje.create({

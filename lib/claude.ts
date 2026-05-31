@@ -75,9 +75,40 @@ export async function generarRespuesta(
 
   const basePrompt = promptPersonalizado?.trim()
     ? promptPersonalizado.trim()
-    : `Eres un asistente virtual de WhatsApp para "${nombreEmpresa}".
-Responde siempre en español, de forma amable, breve y útil.
-Si no sabes algo específico del negocio, ofrece conectar al cliente con un agente humano.`;
+    : `Eres el asistente virtual de "${nombreEmpresa}" 👋
+
+PERSONALIDAD:
+- Habla como una persona real, cálida y cercana
+- Usa el nombre del cliente cuando lo sepas
+- Sé conversacional, no robotizado
+- Usa emojis con moderación y cuando sea apropiado
+- Muestra entusiasmo genuino por ayudar
+
+TONO:
+- Amable y profesional, pero relajado
+- Breve pero completo (2-3 líneas máximo)
+- Empático y paciente
+- Positivo y proactivo
+
+EJEMPLOS DE RESPUESTAS NATURALES:
+❌ "Entendido. Procedo a agendar."
+✅ "¡Perfecto! Te voy a apartar ese horario 😊"
+
+❌ "Nombre requerido para continuar."
+✅ "¿Me podrías decir tu nombre para confirmar la cita?"
+
+❌ "Cita confirmada para 2026-06-01 14:00"
+✅ "Listo Juan, quedas agendado para mañana a las 2pm. ¡Nos vemos! 👍"
+
+CUANDO NO SEPAS ALGO:
+En lugar de decir "No tengo esa información", di algo como:
+"Mmm, esa info no la tengo a la mano. ¿Quieres que te conecte con alguien del equipo?"
+
+IMPORTANTE:
+- SIEMPRE responde en español
+- Si el cliente parece molesto, sé extra empático
+- Confirma los detalles importantes repitiendo en tus palabras
+- Termina con algo positivo o útil`;
 
   const seccionMemoria = formatearMemoria(memoria ?? []);
 
@@ -93,7 +124,7 @@ Si no sabes algo específico del negocio, ofrece conectar al cliente con un agen
   const tools: Anthropic.Tool[] = [
     {
       name: "verificar_disponibilidad",
-      description: "Verifica si hay disponibilidad en una fecha/hora específica o sugiere horarios disponibles. ÚSALA PRIMERO antes de crear una cita para evitar conflictos de horario.",
+      description: "Verifica disponibilidad antes de agendar. Úsala cuando el cliente mencione una fecha/hora. Es tu manera de 'revisar la agenda' antes de confirmar. Responde de forma natural como: 'Déjame revisar la agenda...' o 'Voy a ver qué tengo disponible...'",
       input_schema: {
         type: "object" as const,
         properties: {
@@ -120,7 +151,7 @@ Si no sabes algo específico del negocio, ofrece conectar al cliente con un agen
     },
     {
       name: "crear_cita",
-      description: "Crea una cita o tarea en el calendario. IMPORTANTE: Verifica disponibilidad primero con verificar_disponibilidad. Solo úsala después de confirmar que hay disponibilidad.",
+      description: "Crea/agenda la cita cuando tengas TODOS los datos y hayas verificado disponibilidad. Di algo natural como: '¡Perfecto! Te aparto ese horario' o 'Listo, ya quedaste agendado'. Usa el nombre del cliente en tu respuesta.",
       input_schema: {
         type: "object" as const,
         properties: {
@@ -155,8 +186,9 @@ Si no sabes algo específico del negocio, ofrece conectar al cliente con un agen
   ];
 
   const respuesta = await anthropic.messages.create({
-    model: "claude-haiku-4-5-20251001",
-    max_tokens: 500,
+    model: "claude-sonnet-4-5-20250514",
+    max_tokens: 800,
+    temperature: 0.8,
     system: systemPrompt,
     messages: mensajes,
     tools,
