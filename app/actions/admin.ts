@@ -4,9 +4,11 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import bcrypt from "bcryptjs";
+import { isRedirectError } from "next/dist/client/components/redirect-error";
 
 export async function crearEmpresaConUsuario(formData: FormData) {
   console.log("[crearEmpresaConUsuario] Iniciando...");
+
   try {
     console.log("[crearEmpresaConUsuario] Verificando sesión...");
     const session = await auth();
@@ -76,6 +78,7 @@ export async function crearEmpresaConUsuario(formData: FormData) {
 
     // Si se proveen datos de usuario, crear el usuario CLIENTE
     if (usuarioNombre && usuarioEmail && usuarioPassword) {
+      console.log("[crearEmpresaConUsuario] Creando usuario CLIENTE...");
       const passwordHash = await bcrypt.hash(usuarioPassword, 10);
 
       await prisma.usuario.create({
@@ -92,6 +95,11 @@ export async function crearEmpresaConUsuario(formData: FormData) {
     console.log("[crearEmpresaConUsuario] Empresa creada exitosamente:", empresa.id);
     redirect(`/admin?creada=true`);
   } catch (error) {
+    // Si es un error de redirección, dejarlo pasar (es el comportamiento normal)
+    if (isRedirectError(error)) {
+      throw error;
+    }
+
     console.error("[crearEmpresaConUsuario] Error completo:", error);
     console.error("[crearEmpresaConUsuario] Stack:", error instanceof Error ? error.stack : "No stack");
     const mensaje = error instanceof Error ? error.message : "Error+desconocido";
