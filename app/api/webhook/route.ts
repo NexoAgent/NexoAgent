@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { generarRespuesta } from "@/lib/claude";
 import { buscarRelevantes } from "@/lib/chunker";
+import { evaluarAutomatizaciones } from "@/lib/automatizaciones";
 
 const FRASES_HUMANO = [
   "quiero hablar con una persona",
@@ -72,7 +73,11 @@ export async function POST(request: Request) {
 
     const empresa = await prisma.empresa.findFirst({
       where: { telefonoWhatsapp: numeroEmpresa },
-      include: { documentos: true, memoria: true },
+      include: {
+        documentos: true,
+        memoria: true,
+        automatizaciones: { where: { activa: true } },
+      },
     });
 
     if (!empresa) {
@@ -120,6 +125,33 @@ export async function POST(request: Request) {
 
     if (conversacion.modoHumano) {
       return twiml("Un agente humano revisará tu mensaje pronto.");
+    }
+
+    // Evalúa si alguna automatización se activa
+    const totalMensajes = await prisma.mensaje.count({
+      where: { conversacionId: conversacion.id },
+    });
+    const esPrimerMensaje = totalMensajes === 1; // solo el que acabamos de guardar
+
+    const autoActivada = evaluarAutomatizaciones(
+      empresa.automatizaciones,
+      body,
+      esPrimerMensaje
+    );
+
+    if (autoActivada) {
+      await prisma.automatizacion.update({
+        where: { id: autoActivada.id },
+        data: { ejecuciones: { increment: 1 } },
+      });
+      await prisma.mensaje.create({
+        data: {
+          conversacionId: conversacion.id,
+          contenido: autoActivada.mensaje,
+          rol: "ASISTENTE",
+        },
+      });
+      return twiml(autoActivada.mensaje);
     }
 
     // Obtiene los 10 mensajes MÁS RECIENTES y los ordena cronológicamente

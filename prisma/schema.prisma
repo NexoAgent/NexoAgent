@@ -18,6 +18,7 @@ model Empresa {
   documentos         Documento[]
   contactos          Contacto[]
   memoria            MemoriaEmpresa[]
+  automatizaciones   Automatizacion[]
 }
 
 model MemoriaEmpresa {
@@ -36,6 +37,26 @@ enum CategoriaMemoria {
   HORARIO
   PRECIO
   POLITICA
+}
+
+model Automatizacion {
+  id            String      @id @default(cuid())
+  empresa       Empresa     @relation(fields: [empresaId], references: [id])
+  empresaId     String
+  nombre        String
+  trigger       TipoTrigger
+  condicion     String?
+  mensaje       String
+  activa        Boolean     @default(true)
+  ejecuciones   Int         @default(0)
+  creadoEn      DateTime    @default(now())
+  actualizadoEn DateTime    @updatedAt
+}
+
+enum TipoTrigger {
+  PRIMER_MENSAJE
+  PALABRA_CLAVE
+  FUERA_HORARIO
 }
 
 model Contacto {
