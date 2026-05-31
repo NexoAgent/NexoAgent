@@ -65,9 +65,9 @@ export default async function EmpresaLayout({
       <aside className="w-60 flex flex-col fixed h-full" style={{ background: "#0E2436" }}>
         {/* Logo + empresa */}
         <div className="px-5 py-5" style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
-          <Link href="/dashboard" className="flex items-center gap-1.5 mb-4 opacity-50 hover:opacity-80 transition-opacity">
+          <Link href="/admin" className="flex items-center gap-1.5 mb-4 opacity-50 hover:opacity-80 transition-opacity">
             <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
-            <span className="text-white text-xs">Admin</span>
+            <span className="text-white text-xs">← Volver al panel</span>
           </Link>
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 font-sora font-bold text-white text-sm grad-bg">
