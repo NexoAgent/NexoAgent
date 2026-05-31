@@ -2,12 +2,14 @@
 
 **Plataforma multi-tenant de agentes conversacionales inteligentes para WhatsApp**
 
-NexoAgent es un sistema completo de asistentes virtuales potenciados por IA (Claude de Anthropic) que permite a las empresas automatizar y mejorar sus conversaciones con clientes a través de WhatsApp. Incluye gestión de conocimiento, CRM integrado, automatizaciones, analíticas y calendario de citas.
+NexoAgent es un sistema completo de asistentes virtuales potenciados por IA (Claude de Anthropic) que permite a las empresas automatizar y mejorar sus conversaciones con clientes a través de WhatsApp. Incluye gestión de conocimiento, CRM integrado, automatizaciones, analíticas y **creación automática de citas/tareas desde WhatsApp con sincronización a Google Calendar**.
 
 > 📚 **Guías rápidas**: 
 > - [🚀 Deploy en Render](QUICKSTART-RENDER.md)
 > - [📦 Deployment completo](DEPLOYMENT.md)
 > - [🔒 Seguridad](SECURITY.md)
+> - [🤖 Agente Automático](AGENTE-AUTOMATICO.md) ← **NUEVO**
+> - [📅 Setup Google Calendar](GOOGLE-CALENDAR-SETUP.md) ← **NUEVO**
 
 ---
 
@@ -43,11 +45,13 @@ NexoAgent es un sistema completo de asistentes virtuales potenciados por IA (Cla
 - Mensaje fuera de horario
 - Control de ejecuciones
 
-### 📅 **Agenda de citas**
-- Crear, confirmar y cancelar citas
-- Integración con Calendly
+### 📅 **Agenda de Citas/Tareas** ⭐ **NUEVO**
+- **🤖 Creación automática por IA**: El agente crea citas cuando el cliente las solicita por WhatsApp
+- **📅 Integración con Google Calendar**: Sincronización bidireccional completa
+- **✅ Gestión completa**: Crear, confirmar, cancelar citas desde el dashboard
+- **🔗 Enlaces directos**: Cada cita tiene link a Google Calendar
+- **👤 Vinculación automática**: Se crea/actualiza contacto en CRM
 - Vista de citas futuras, pasadas y canceladas
-- Vinculación automática con contactos
 
 ### 📊 **Analíticas**
 - Total de conversaciones y contactos
