@@ -20,23 +20,23 @@ async function main() {
   console.log(`📋 Encontradas ${automatizaciones.length} automatizaciones de primer mensaje`);
 
   for (const auto of automatizaciones) {
-    const respuestaVieja = auto.respuesta;
+    const mensajeViejo = auto.mensaje;
 
     // Solo actualizar si contiene "asistente virtual"
-    if (respuestaVieja.toLowerCase().includes("asistente virtual")) {
+    if (mensajeViejo.toLowerCase().includes("asistente virtual")) {
       const nombreEmpresa = auto.empresa.nombre;
 
       // Generar mensaje personalizado con Katy
-      const respuestaNueva = `¡Hola! Soy Katy de ${nombreEmpresa} 😊 ¿En qué te puedo ayudar?`;
+      const mensajeNuevo = `¡Hola! Soy Katy de ${nombreEmpresa} 😊 ¿En qué te puedo ayudar?`;
 
       await prisma.automatizacion.update({
         where: { id: auto.id },
-        data: { respuesta: respuestaNueva },
+        data: { mensaje: mensajeNuevo },
       });
 
       console.log(`✅ Actualizada: ${nombreEmpresa}`);
-      console.log(`   Antes: ${respuestaVieja}`);
-      console.log(`   Ahora: ${respuestaNueva}`);
+      console.log(`   Antes: ${mensajeViejo}`);
+      console.log(`   Ahora: ${mensajeNuevo}`);
       console.log("");
     }
   }
