@@ -1,4 +1,6 @@
 import { prisma } from "@/lib/prisma";
+import { auth } from "@/lib/auth";
+import { redirect } from "next/navigation";
 import ConocimientoPanel from "./ConocimientoPanel";
 
 export default async function ConocimientoPage({
@@ -7,6 +9,12 @@ export default async function ConocimientoPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+
+  // Solo PROVEEDOR puede acceder
+  const session = await auth();
+  if (!session || session.user.rol !== "PROVEEDOR") {
+    redirect(`/empresa/${id}`);
+  }
 
   const documentos = await prisma.documento.findMany({
     where: { empresaId: id },

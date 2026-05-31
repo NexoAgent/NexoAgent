@@ -1,4 +1,6 @@
 import { prisma } from "@/lib/prisma";
+import { auth } from "@/lib/auth";
+import { redirect } from "next/navigation";
 import { agregarMemoria, eliminarMemoria } from "@/app/actions/memoria";
 
 const CATEGORIAS = [
@@ -13,6 +15,13 @@ export default async function MemoriaPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  const { id } = await params;
+
+  // Solo PROVEEDOR puede acceder
+  const session = await auth();
+  if (!session || session.user.rol !== "PROVEEDOR") {
+    redirect(`/empresa/${id}`);
+  }
   const { id } = await params;
 
   const entradas = await prisma.memoriaEmpresa.findMany({

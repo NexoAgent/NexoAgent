@@ -1,6 +1,8 @@
 import { prisma } from "@/lib/prisma";
+import { auth } from "@/lib/auth";
+import { logout } from "@/app/actions/auth";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
 type NavItem = {
   href: string;
@@ -30,11 +32,32 @@ export default async function EmpresaLayout({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+
+  // Verificar autenticación
+  const session = await auth();
+  if (!session) redirect("/login");
+
+  // Verificar permisos: CLIENTE solo puede ver su propia empresa
+  if (session.user.rol === "CLIENTE" && session.user.empresaId !== id) {
+    redirect(`/empresa/${session.user.empresaId}`);
+  }
+
   const empresa = await prisma.empresa.findUnique({ where: { id } });
   if (!empresa) notFound();
 
   const pendientes = await prisma.conversacion.count({
     where: { empresaId: id, modoHumano: true },
+  });
+
+  // Filtrar navegación según rol
+  const esProveedor = session.user.rol === "PROVEEDOR";
+  const seccionesRestringidas = ["Conocimiento", "Memoria", "Automatizaciones", "Configuración"];
+
+  const navFiltrada = NAV.filter((item) => {
+    if (!esProveedor && seccionesRestringidas.includes(item.label)) {
+      return false;
+    }
+    return true;
   });
 
   return (
@@ -62,7 +85,7 @@ export default async function EmpresaLayout({
 
         {/* Nav */}
         <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
-          {NAV.map((item) => {
+          {navFiltrada.map((item) => {
             const href = `/empresa/${id}${item.href}`;
             if (item.soon) {
               return (
@@ -88,7 +111,23 @@ export default async function EmpresaLayout({
         </nav>
 
         {/* Footer */}
-        <div className="px-5 py-4" style={{ borderTop: "1px solid rgba(255,255,255,0.08)" }}>
+        <div className="px-5 py-4 space-y-3" style={{ borderTop: "1px solid rgba(255,255,255,0.08)" }}>
+          <div className="text-xs text-gray-400">
+            <div className="font-medium text-white">{session.user.name}</div>
+            <div className="mt-1">
+              <span className="px-2 py-0.5 rounded text-[10px] uppercase font-medium bg-blue-500/20 text-blue-300">
+                {session.user.rol}
+              </span>
+            </div>
+          </div>
+          <form action={logout}>
+            <button
+              type="submit"
+              className="w-full text-left text-xs text-red-400 hover:text-red-300 transition-colors"
+            >
+              Cerrar sesión
+            </button>
+          </form>
           <p className="text-xs" style={{ color: "#41566B" }}>NexoAgent · Empleado virtual IA</p>
         </div>
       </aside>

@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
-import { notFound } from "next/navigation";
+import { auth } from "@/lib/auth";
+import { notFound, redirect } from "next/navigation";
 import { actualizarPrompt, editarEmpresa } from "@/app/actions/empresas";
 import DocumentosPanel from "./DocumentosPanel";
 import EliminarEmpresa from "./EliminarEmpresa";
@@ -13,6 +14,12 @@ export default async function EmpresaConfiguracionPage({
 }) {
   const { id } = await params;
   const { guardado, editado } = await searchParams;
+
+  // Solo PROVEEDOR puede acceder
+  const session = await auth();
+  if (!session || session.user.rol !== "PROVEEDOR") {
+    redirect(`/empresa/${id}`);
+  }
 
   const empresa = await prisma.empresa.findUnique({
     where: { id },

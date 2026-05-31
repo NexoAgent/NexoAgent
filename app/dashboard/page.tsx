@@ -1,7 +1,36 @@
 import { prisma } from "@/lib/prisma";
+import { auth } from "@/lib/auth";
+import { redirect } from "next/navigation";
 import Link from "next/link";
 
 export default async function DashboardPage() {
+  const session = await auth();
+
+  if (!session) {
+    redirect("/login");
+  }
+
+  // CLIENTE: redirigir a su empresa
+  if (session.user.rol === "CLIENTE") {
+    if (session.user.empresaId) {
+      redirect(`/empresa/${session.user.empresaId}`);
+    } else {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-gray-50">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">
+              Sin empresa asignada
+            </h1>
+            <p className="text-gray-600">
+              Contacta al administrador para que te asigne una empresa
+            </p>
+          </div>
+        </div>
+      );
+    }
+  }
+
+  // PROVEEDOR: mostrar panel general
   const [empresas, conversaciones, mensajes, pendientes] = await Promise.all([
     prisma.empresa.count(),
     prisma.conversacion.count(),

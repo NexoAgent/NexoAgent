@@ -1,6 +1,9 @@
 import Link from "next/link";
+import { auth } from "@/lib/auth";
+import { logout } from "@/app/actions/auth";
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const session = await auth();
   return (
     <div className="min-h-screen flex" style={{ background: "#F4F7FA" }}>
       <aside className="w-60 flex flex-col fixed h-full" style={{ background: "#0E2436" }}>
@@ -33,7 +36,22 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </nav>
 
         {/* Footer */}
-        <div className="px-5 py-4" style={{ borderTop: "1px solid rgba(255,255,255,0.08)" }}>
+        <div className="px-5 py-4 space-y-3" style={{ borderTop: "1px solid rgba(255,255,255,0.08)" }}>
+          {session && (
+            <div className="text-xs text-gray-400">
+              <div className="font-medium text-white">{session.user.name}</div>
+              <div>{session.user.email}</div>
+              <div className="mt-1 text-blue-400">{session.user.rol}</div>
+            </div>
+          )}
+          <form action={logout}>
+            <button
+              type="submit"
+              className="w-full text-left text-xs text-red-400 hover:text-red-300 transition-colors"
+            >
+              Cerrar sesión
+            </button>
+          </form>
           <p className="text-xs" style={{ color: "#41566B" }}>NexoAgent · v1.0</p>
         </div>
       </aside>

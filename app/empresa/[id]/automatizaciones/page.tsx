@@ -1,4 +1,6 @@
 import { prisma } from "@/lib/prisma";
+import { auth } from "@/lib/auth";
+import { redirect } from "next/navigation";
 import {
   crearAutomatizacion,
   toggleAutomatizacion,
@@ -39,6 +41,12 @@ export default async function AutomatizacionesPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+
+  // Solo PROVEEDOR puede acceder
+  const session = await auth();
+  if (!session || session.user.rol !== "PROVEEDOR") {
+    redirect(`/empresa/${id}`);
+  }
 
   const automatizaciones = await prisma.automatizacion.findMany({
     where: { empresaId: id },
