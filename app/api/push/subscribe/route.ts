@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
       where: { id: session.user.id },
     });
 
-    if (!usuario || (usuario.empresaId !== empresaId && usuario.rol !== "ADMIN")) {
+    if (!usuario || (usuario.empresaId !== empresaId && usuario.rol !== "PROVEEDOR")) {
       return NextResponse.json({ error: "No autorizado" }, { status: 403 });
     }
 
@@ -87,7 +87,7 @@ export async function DELETE(request: NextRequest) {
       where: { id: session.user.id },
     });
 
-    if (!usuario || (usuario.empresaId !== empresaId && usuario.rol !== "ADMIN")) {
+    if (!usuario || (usuario.empresaId !== empresaId && usuario.rol !== "PROVEEDOR")) {
       return NextResponse.json({ error: "No autorizado" }, { status: 403 });
     }
 
