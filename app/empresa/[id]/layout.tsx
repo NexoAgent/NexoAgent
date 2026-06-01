@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { notFound, redirect } from "next/navigation";
 import MobileMenu from "@/app/components/MobileMenu";
+import NotificationToggle from "@/app/components/NotificationToggle";
 
 type NavItem = {
   href: string;
@@ -149,6 +150,11 @@ export default async function EmpresaLayout({
 
         {/* Footer */}
         <div className="px-5 py-4 space-y-3" style={{ borderTop: "1px solid #E5E7EB" }}>
+          {/* Botón de notificaciones */}
+          <div className="mb-3">
+            <NotificationToggle empresaId={id} />
+          </div>
+
           <div className="text-xs">
             <div className="font-medium text-gray-900">{session.user.name}</div>
             <div className="mt-1">

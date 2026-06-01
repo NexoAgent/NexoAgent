@@ -4,6 +4,7 @@ import { buscarRelevantes } from "@/lib/chunker";
 import { evaluarAutomatizaciones } from "@/lib/automatizaciones";
 import { setCredentials, createEvent } from "@/lib/google-calendar";
 import { verificarDisponibilidad, sugerirHorarios } from "@/lib/disponibilidad";
+import { notificarNuevoMensaje, notificarModoHumano, notificarNuevaCita } from "@/lib/push-notifications";
 
 const FRASES_HUMANO = [
   "quiero hablar con una persona",
@@ -115,11 +116,26 @@ export async function POST(request: Request) {
       },
     });
 
+    // Notificar nuevo mensaje
+    try {
+      await notificarNuevoMensaje(empresa.id, conversacion.id, numeroCliente, body);
+    } catch (error) {
+      console.error("Error al enviar notificación de nuevo mensaje:", error);
+    }
+
     if (solicitaHumano(body)) {
       await prisma.conversacion.update({
         where: { id: conversacion.id },
         data: { modoHumano: true },
       });
+
+      // Notificar activación de modo humano
+      try {
+        await notificarModoHumano(empresa.id, conversacion.id, numeroCliente);
+      } catch (error) {
+        console.error("Error al enviar notificación de modo humano:", error);
+      }
+
       return twiml(
         "Entendido, en breve un agente humano te atenderá. Por favor espera."
       );
@@ -318,7 +334,7 @@ export async function POST(request: Request) {
       }
 
       // Crear la cita
-      await prisma.cita.create({
+      const citaCreada = await prisma.cita.create({
         data: {
           empresaId: empresa.id,
           contactoId: contacto.id,
@@ -331,6 +347,13 @@ export async function POST(request: Request) {
           googleCalendarLink,
         },
       });
+
+      // Notificar nueva cita
+      try {
+        await notificarNuevaCita(empresa.id, citaCreada.id, nombreCliente, fechaHora);
+      } catch (error) {
+        console.error("Error al enviar notificación de nueva cita:", error);
+      }
 
       console.log(`📅 Cita creada automáticamente: ${nombreCliente} - ${fecha} ${hora}`);
     }

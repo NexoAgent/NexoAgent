@@ -20,11 +20,11 @@ model Usuario {
 }
 
 model Empresa {
-  id                 String           @id @default(cuid())
+  id                 String              @id @default(cuid())
   nombre             String
-  telefonoWhatsapp   String           @unique
-  creadoEn           DateTime         @default(now())
-  actualizadoEn      DateTime         @updatedAt
+  telefonoWhatsapp   String              @unique
+  creadoEn           DateTime            @default(now())
+  actualizadoEn      DateTime            @updatedAt
   promptSistema      String?
   calendlyUrl        String?
   googleAccessToken  String?
@@ -43,7 +43,8 @@ model Empresa {
   conversaciones     Conversacion[]
   documentos         Documento[]
   memoria            MemoriaEmpresa[]
-  usuario            Usuario?         @relation("EmpresaUsuario")
+  pushSubscriptions  PushSubscription[]
+  usuario            Usuario?            @relation("EmpresaUsuario")
 }
 
 model Cita {
@@ -187,4 +188,19 @@ enum Estado {
 enum Rol {
   CLIENTE
   ASISTENTE
+}
+
+model PushSubscription {
+  id            String   @id @default(cuid())
+  empresaId     String
+  endpoint      String
+  p256dh        String
+  auth          String
+  userAgent     String?
+  creadoEn      DateTime @default(now())
+  actualizadoEn DateTime @updatedAt
+  empresa       Empresa  @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+
+  @@unique([empresaId, endpoint])
+  @@index([empresaId])
 }
