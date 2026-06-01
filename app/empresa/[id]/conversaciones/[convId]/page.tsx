@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { reactivarIA, enviarMensajeHumano } from "@/app/actions/conversaciones";
+import FormularioRespuesta from "@/app/components/FormularioRespuesta";
 
 export default async function EmpresaConversacionDetallePage({
   params,
@@ -79,45 +80,12 @@ export default async function EmpresaConversacionDetallePage({
       </div>
 
       {/* Formulario de respuesta */}
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
-        <form action={enviarMensajeHumano} className="flex gap-3">
-          <input type="hidden" name="conversacionId" value={conversacion.id} />
-          <input type="hidden" name="empresaId" value={id} />
-
-          <div className="flex-1">
-            <textarea
-              name="contenido"
-              placeholder={conversacion.modoHumano ? "Escribe tu respuesta al cliente..." : "IA está respondiendo automáticamente"}
-              disabled={!conversacion.modoHumano}
-              required
-              rows={3}
-              className="w-full rounded-lg px-4 py-3 text-sm border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed resize-none"
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={!conversacion.modoHumano}
-            className="self-end px-5 py-3 rounded-lg text-sm font-medium text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-            style={{
-              background: conversacion.modoHumano
-                ? "linear-gradient(135deg, #2B82F0 0%, #15B8C9 100%)"
-                : "#9CA3AF",
-            }}
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-            </svg>
-            Enviar
-          </button>
-        </form>
-
-        {!conversacion.modoHumano && (
-          <p className="text-xs text-gray-500 mt-2 text-center">
-            La IA está respondiendo automáticamente. Activa el modo humano para responder tú mismo.
-          </p>
-        )}
-      </div>
+      <FormularioRespuesta
+        conversacionId={conversacion.id}
+        empresaId={id}
+        modoHumano={conversacion.modoHumano}
+        enviarMensajeHumano={enviarMensajeHumano}
+      />
     </div>
   );
 }
