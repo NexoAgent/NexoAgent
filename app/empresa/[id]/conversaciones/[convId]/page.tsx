@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { reactivarIA } from "@/app/actions/conversaciones";
+import { reactivarIA, enviarMensajeHumano } from "@/app/actions/conversaciones";
 
 export default async function EmpresaConversacionDetallePage({
   params,
@@ -50,11 +50,12 @@ export default async function EmpresaConversacionDetallePage({
 
       {conversacion.modoHumano && (
         <div className="mb-4 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-sm text-amber-700">
-          Esta conversación está en modo humano. La IA no responderá hasta que hagas clic en &ldquo;Reactivar IA&rdquo;.
+          💬 Modo humano activo. Puedes responder al cliente usando el formulario de abajo.
         </div>
       )}
 
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 space-y-4 min-h-80">
+      {/* Área de mensajes */}
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 space-y-4 min-h-96 max-h-[600px] overflow-y-auto mb-4">
         {conversacion.mensajes.length === 0 ? (
           <p className="text-sm text-gray-400 text-center py-10">Sin mensajes en esta conversación</p>
         ) : (
@@ -64,16 +65,57 @@ export default async function EmpresaConversacionDetallePage({
                 <div className={`px-4 py-3 rounded-2xl text-sm leading-relaxed ${
                   m.rol === "CLIENTE"
                     ? "bg-gray-100 text-gray-800 rounded-tl-sm"
-                    : "bg-blue-600 text-white rounded-tr-sm"
+                    : "bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-tr-sm shadow-sm"
                 }`}>
                   {m.contenido}
                 </div>
                 <p className="text-xs text-gray-400 px-1">
-                  {m.rol === "CLIENTE" ? "Cliente" : "IA"} · {m.creadoEn.toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit" })}
+                  {m.rol === "CLIENTE" ? "Cliente" : "Asistente"} · {m.creadoEn.toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit" })}
                 </p>
               </div>
             </div>
           ))
+        )}
+      </div>
+
+      {/* Formulario de respuesta */}
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+        <form action={enviarMensajeHumano} className="flex gap-3">
+          <input type="hidden" name="conversacionId" value={conversacion.id} />
+          <input type="hidden" name="empresaId" value={id} />
+
+          <div className="flex-1">
+            <textarea
+              name="contenido"
+              placeholder={conversacion.modoHumano ? "Escribe tu respuesta al cliente..." : "IA está respondiendo automáticamente"}
+              disabled={!conversacion.modoHumano}
+              required
+              rows={3}
+              className="w-full rounded-lg px-4 py-3 text-sm border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed resize-none"
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={!conversacion.modoHumano}
+            className="self-end px-5 py-3 rounded-lg text-sm font-medium text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            style={{
+              background: conversacion.modoHumano
+                ? "linear-gradient(135deg, #2B82F0 0%, #15B8C9 100%)"
+                : "#9CA3AF",
+            }}
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+            </svg>
+            Enviar
+          </button>
+        </form>
+
+        {!conversacion.modoHumano && (
+          <p className="text-xs text-gray-500 mt-2 text-center">
+            La IA está respondiendo automáticamente. Activa el modo humano para responder tú mismo.
+          </p>
         )}
       </div>
     </div>

@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { notificarModoHumano } from "@/lib/push-notifications";
+import { auth } from "@/lib/auth";
 
 export async function reactivarIA(formData: FormData) {
   const id = formData.get("id") as string;
@@ -34,4 +35,80 @@ export async function activarModoHumano(
 
   revalidatePath(`/empresa/${empresaId}/conversaciones`);
   revalidatePath(`/empresa/${empresaId}/conversaciones/${conversacionId}`);
+}
+
+export async function enviarMensajeHumano(formData: FormData) {
+  const session = await auth();
+  if (!session) {
+    console.error("No autenticado");
+    return;
+  }
+
+  const conversacionId = formData.get("conversacionId") as string;
+  const empresaId = formData.get("empresaId") as string;
+  const contenido = formData.get("contenido") as string;
+
+  if (!conversacionId || !empresaId || !contenido || contenido.trim() === "") {
+    console.error("Datos incompletos");
+    return;
+  }
+
+  try {
+    // Obtener la conversación con la empresa
+    const conversacion = await prisma.conversacion.findUnique({
+      where: { id: conversacionId },
+      include: { empresa: true },
+    });
+
+    if (!conversacion || conversacion.empresaId !== empresaId) {
+      console.error("Conversación no encontrada");
+      return;
+    }
+
+    // Guardar el mensaje en la base de datos
+    await prisma.mensaje.create({
+      data: {
+        conversacionId,
+        contenido: contenido.trim(),
+        rol: "ASISTENTE",
+      },
+    });
+
+    // Enviar mensaje por WhatsApp usando Twilio
+    const accountSid = process.env.TWILIO_ACCOUNT_SID;
+    const authToken = process.env.TWILIO_AUTH_TOKEN;
+    const from = process.env.TWILIO_WHATSAPP_FROM;
+
+    if (accountSid && authToken && from) {
+      try {
+        const response = await fetch(
+          `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`,
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Basic ${Buffer.from(`${accountSid}:${authToken}`).toString("base64")}`,
+              "Content-Type": "application/x-www-form-urlencoded",
+            },
+            body: new URLSearchParams({
+              From: from,
+              To: `whatsapp:${conversacion.numeroCliente}`,
+              Body: contenido.trim(),
+            }),
+          }
+        );
+
+        if (!response.ok) {
+          console.error("Error enviando mensaje por WhatsApp:", await response.text());
+        }
+      } catch (error) {
+        console.error("Error al enviar por Twilio:", error);
+      }
+    }
+
+    // Revalidar las rutas para actualizar la UI
+    revalidatePath(`/empresa/${empresaId}/conversaciones`);
+    revalidatePath(`/empresa/${empresaId}/conversaciones/${conversacionId}`);
+  } catch (error) {
+    console.error("Error al enviar mensaje:", error);
+  }
 }
