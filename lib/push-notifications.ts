@@ -10,18 +10,24 @@ if (vapidPublicKey && vapidPrivateKey) {
   webpush.setVapidDetails(vapidSubject, vapidPublicKey, vapidPrivateKey);
 }
 
+export type NotificationType = "mensaje" | "modo-humano" | "cita";
+
 export interface PushNotificationPayload {
   title: string;
   body: string;
+  type: NotificationType;
   url?: string;
   empresaId?: string;
   conversacionId?: string;
   requireInteraction?: boolean;
   tag?: string;
+  renotify?: boolean;
   actions?: Array<{
     action: string;
     title: string;
   }>;
+  image?: string;
+  timestamp?: number;
 }
 
 /**
@@ -45,12 +51,16 @@ export async function sendPushNotification(
     const notificationPayload = JSON.stringify({
       title: payload.title,
       body: payload.body,
+      type: payload.type,
       url: payload.url || "/",
       empresaId: payload.empresaId,
       conversacionId: payload.conversacionId,
       requireInteraction: payload.requireInteraction || false,
       tag: payload.tag || "nexoagent-notification",
+      renotify: payload.renotify || false,
       actions: payload.actions || [],
+      image: payload.image,
+      timestamp: payload.timestamp || Date.now(),
     });
 
     let sent = 0;
@@ -99,6 +109,7 @@ export async function sendPushNotification(
 
 /**
  * Notificación cuando un nuevo mensaje llega
+ * Agrupa mensajes del mismo cliente automáticamente
  */
 export async function notificarNuevoMensaje(
   empresaId: string,
@@ -106,23 +117,61 @@ export async function notificarNuevoMensaje(
   numeroCliente: string,
   contenido: string
 ) {
-  const mensajeTruncado = contenido.length > 100
-    ? contenido.substring(0, 100) + "..."
-    : contenido;
+  // Verificar si ya hay mensajes recientes de esta conversación
+  const mensajesRecientes = await contarMensajesRecientes(conversacionId);
+
+  let title: string;
+  let body: string;
+
+  if (mensajesRecientes > 1) {
+    // Agrupar: mostrar contador
+    title = `💬 ${mensajesRecientes} nuevos mensajes de ${numeroCliente}`;
+    body = "Tienes mensajes sin leer en esta conversación";
+  } else {
+    // Mensaje individual
+    const mensajeTruncado = contenido.length > 100
+      ? contenido.substring(0, 100) + "..."
+      : contenido;
+    title = `💬 Nuevo mensaje de ${numeroCliente}`;
+    body = mensajeTruncado;
+  }
 
   await sendPushNotification(empresaId, {
-    title: `💬 Nuevo mensaje de ${numeroCliente}`,
-    body: mensajeTruncado,
+    title,
+    body,
+    type: "mensaje",
     url: `/empresa/${empresaId}/conversaciones/${conversacionId}`,
     empresaId,
     conversacionId,
-    tag: `mensaje-${conversacionId}`,
+    tag: `mensaje-${conversacionId}`, // Mismo tag = reemplaza la anterior
+    renotify: true, // Re-notifica cuando se actualiza
     requireInteraction: false,
   });
 }
 
 /**
+ * Cuenta mensajes recientes de una conversación (últimos 2 minutos)
+ * para agrupar notificaciones
+ */
+async function contarMensajesRecientes(conversacionId: string): Promise<number> {
+  const dosMinutosAtras = new Date(Date.now() - 2 * 60 * 1000);
+
+  const count = await prisma.mensaje.count({
+    where: {
+      conversacionId,
+      rol: "CLIENTE",
+      creadoEn: {
+        gte: dosMinutosAtras,
+      },
+    },
+  });
+
+  return count;
+}
+
+/**
  * Notificación cuando la IA deriva a modo humano
+ * ALTA PRIORIDAD - Requiere atención inmediata
  */
 export async function notificarModoHumano(
   empresaId: string,
@@ -130,22 +179,25 @@ export async function notificarModoHumano(
   numeroCliente: string
 ) {
   await sendPushNotification(empresaId, {
-    title: `👤 Atención requerida - ${numeroCliente}`,
-    body: "La IA derivó esta conversación a modo humano. El cliente necesita tu atención.",
+    title: `🚨 URGENTE: Atención requerida`,
+    body: `${numeroCliente} necesita hablar con un humano`,
+    type: "modo-humano",
     url: `/empresa/${empresaId}/conversaciones/${conversacionId}`,
     empresaId,
     conversacionId,
     tag: `modo-humano-${conversacionId}`,
-    requireInteraction: true, // Requiere que el usuario interactúe
+    requireInteraction: true, // No se cierra automáticamente
+    renotify: true,
     actions: [
-      { action: "ver", title: "Ver conversación" },
-      { action: "ignorar", title: "Ignorar" },
+      { action: "ver", title: "👁️ Ver ahora" },
+      { action: "ignorar", title: "❌ Ignorar" },
     ],
   });
 }
 
 /**
  * Notificación cuando se crea una nueva cita
+ * PRIORIDAD NORMAL - Informativa
  */
 export async function notificarNuevaCita(
   empresaId: string,
@@ -164,9 +216,11 @@ export async function notificarNuevaCita(
   await sendPushNotification(empresaId, {
     title: `📅 Nueva cita agendada`,
     body: `${nombreCliente} - ${fechaFormateada}`,
+    type: "cita",
     url: `/empresa/${empresaId}/agenda`,
     empresaId,
     tag: `cita-${citaId}`,
     requireInteraction: false,
+    timestamp: fecha.getTime(),
   });
 }
