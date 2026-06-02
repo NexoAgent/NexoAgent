@@ -34,26 +34,11 @@ export function usePrefetch() {
 }
 
 /**
- * Componente wrapper que hace prefetch en hover
+ * Helper para crear props de prefetch
  */
-export function PrefetchLink({
-  href,
-  children,
-  className,
-}: {
-  href: string;
-  children: React.ReactNode;
-  className?: string;
-}) {
-  const prefetch = usePrefetch();
-
-  return (
-    <a
-      href={href}
-      onMouseEnter={() => prefetch(href)}
-      className={className}
-    >
-      {children}
-    </a>
-  );
+export function createPrefetchProps(href: string, prefetch: (route: string) => void) {
+  return {
+    href,
+    onMouseEnter: () => prefetch(href),
+  };
 }
