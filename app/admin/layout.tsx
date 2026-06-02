@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { auth } from "@/lib/auth";
 import { logout } from "@/app/actions/auth";
+import KeyboardShortcutsHelp from "@/app/components/KeyboardShortcutsHelp";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
@@ -64,6 +65,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
       <main className="flex-1 ml-60">
         {children}
+        <KeyboardShortcutsHelp />
       </main>
     </div>
   );

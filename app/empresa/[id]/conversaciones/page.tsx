@@ -4,6 +4,7 @@ import { formatTimeAgo } from "@/lib/utils";
 import Breadcrumbs from "@/app/components/Breadcrumbs";
 import ScrollToTop from "@/app/components/ScrollToTop";
 import EmptyState from "@/app/components/help/EmptyState";
+import ConversacionesMobileActions from "@/app/components/ConversacionesMobileActions";
 
 export default async function EmpresaConversacionesPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -75,6 +76,7 @@ export default async function EmpresaConversacionesPage({ params }: { params: Pr
       )}
 
       <ScrollToTop />
+      <ConversacionesMobileActions empresaId={id} />
     </div>
   );
 }

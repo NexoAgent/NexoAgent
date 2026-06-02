@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { auth } from "@/lib/auth";
 import { logout } from "@/app/actions/auth";
+import KeyboardShortcutsHelp from "@/app/components/KeyboardShortcutsHelp";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
@@ -61,6 +62,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
       <main className="flex-1 ml-60">
         <div className="max-w-5xl mx-auto px-8 py-8">{children}</div>
+        <KeyboardShortcutsHelp />
       </main>
     </div>
   );

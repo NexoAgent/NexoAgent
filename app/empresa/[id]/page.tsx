@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import StatCard from "@/app/components/data/StatCard";
 
 export default async function EmpresaHomePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -49,17 +50,33 @@ export default async function EmpresaHomePage({ params }: { params: Promise<{ id
       )}
 
       <div className="grid grid-cols-3 gap-5 mb-8">
-        {[
-          { label: "Conversaciones", valor: conversaciones, sub: "totales", color: "blue" },
-          { label: "Mensajes", valor: mensajes, sub: "procesados por IA", color: "indigo" },
-          { label: "Pendientes", valor: pendientes, sub: "requieren humano", color: "amber" },
-        ].map((s) => (
-          <div key={s.label} className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
-            <p className="text-3xl font-bold text-gray-900">{s.valor}</p>
-            <p className="text-sm font-medium text-gray-700 mt-1">{s.label}</p>
-            <p className="text-xs text-gray-400">{s.sub}</p>
-          </div>
-        ))}
+        <StatCard
+          title="Conversaciones"
+          value={conversaciones}
+          subtitle="totales"
+          trend={conversaciones > 0 ? "up" : undefined}
+          trendValue={conversaciones > 0 ? "+12%" : undefined}
+          icon="💬"
+          actionLabel="Ver todas"
+          actionHref={`/empresa/${id}/conversaciones`}
+        />
+        <StatCard
+          title="Mensajes"
+          value={mensajes}
+          subtitle="procesados por IA"
+          trend={mensajes > 0 ? "up" : undefined}
+          icon="🤖"
+        />
+        <StatCard
+          title="Pendientes"
+          value={pendientes}
+          subtitle="requieren humano"
+          trend={pendientes > 0 ? "down" : undefined}
+          variant={pendientes > 0 ? "warning" : "default"}
+          icon="⚠️"
+          actionLabel={pendientes > 0 ? "Atender" : undefined}
+          actionHref={pendientes > 0 ? `/empresa/${id}/conversaciones` : undefined}
+        />
       </div>
 
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm">

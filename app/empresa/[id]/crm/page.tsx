@@ -1,6 +1,10 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { crearContacto } from "@/app/actions/crm";
+import SearchInput from "@/app/components/data/SearchInput";
+import ScrollToTop from "@/app/components/ScrollToTop";
+import EmptyState from "@/app/components/help/EmptyState";
+import LoadingButton from "@/app/components/ui/LoadingButton";
 
 const TIPOS = [
   { key: "TODOS", label: "Todos" },
@@ -20,16 +24,22 @@ export default async function CRMPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ tipo?: string }>;
+  searchParams: Promise<{ tipo?: string; q?: string }>;
 }) {
   const { id } = await params;
-  const { tipo } = await searchParams;
+  const { tipo, q } = await searchParams;
   const filtro = tipo && tipo !== "TODOS" ? tipo : undefined;
 
   const contactos = await prisma.contacto.findMany({
     where: {
       empresaId: id,
       ...(filtro ? { tipo: filtro as "LEAD" | "CLIENTE" | "PROVEEDOR" } : {}),
+      ...(q ? {
+        OR: [
+          { nombre: { contains: q, mode: "insensitive" } },
+          { telefono: { contains: q } },
+        ]
+      } : {}),
     },
     orderBy: { creadoEn: "desc" },
     include: { _count: { select: { conversaciones: true } } },
@@ -52,6 +62,11 @@ export default async function CRMPage({
             {contactos.length} contacto{contactos.length !== 1 ? "s" : ""} · Leads, clientes y proveedores
           </p>
         </div>
+      </div>
+
+      {/* Búsqueda */}
+      <div className="mb-4">
+        <SearchInput placeholder="Buscar por nombre o teléfono..." />
       </div>
 
       {/* Filtros */}
@@ -83,12 +98,17 @@ export default async function CRMPage({
         {/* Lista de contactos */}
         <div className="col-span-2 bg-white rounded-xl" style={{ border: "1px solid #E2E9F0" }}>
           {contactos.length === 0 ? (
-            <div className="py-16 text-center">
-              <div className="w-12 h-12 rounded-full mx-auto mb-4 flex items-center justify-center" style={{ background: "#F4F7FA" }}>
-                <svg className="w-5 h-5" style={{ color: "#73869A" }} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-              </div>
-              <p className="text-sm" style={{ color: "#73869A" }}>No hay contactos todavía.</p>
-              <p className="text-xs mt-1" style={{ color: "#73869A" }}>Se crean automáticamente cuando llega un WhatsApp.</p>
+            <div className="py-16">
+              <EmptyState
+                icon="👥"
+                title={q ? "No se encontraron contactos" : "No hay contactos todavía"}
+                description={q ? `No hay resultados para "${q}"` : "Se crean automáticamente cuando llega un mensaje"}
+                steps={!q ? [
+                  "Los contactos se crean automáticamente",
+                  "O agrégalos manualmente con el formulario",
+                  "Organízalos como Leads, Clientes o Proveedores"
+                ] : undefined}
+              />
             </div>
           ) : (
             <div className="divide-y" style={{ borderColor: "#F4F7FA" }}>
@@ -150,13 +170,17 @@ export default async function CRMPage({
                 <option value="PROVEEDOR">Proveedor</option>
               </select>
             </div>
-            <button type="submit"
-              className="w-full text-white text-sm font-medium py-2 rounded-lg transition-opacity hover:opacity-90 grad-bg">
+            <LoadingButton
+              type="submit"
+              className="w-full text-white text-sm font-medium py-2 rounded-lg transition-opacity hover:opacity-90 grad-bg"
+            >
               Crear contacto
-            </button>
+            </LoadingButton>
           </form>
         </div>
       </div>
+
+      <ScrollToTop />
     </div>
   );
 }

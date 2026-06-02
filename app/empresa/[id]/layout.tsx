@@ -10,6 +10,7 @@ import NotificationSoundPlayer from "@/app/components/NotificationSoundPlayer";
 import ScrollToTop from "@/app/components/ScrollToTop";
 import GlobalSearch from "@/app/components/GlobalSearch";
 import KeyboardShortcutsHelp from "@/app/components/KeyboardShortcutsHelp";
+import EmpresaTour from "@/app/components/EmpresaTour";
 
 type NavItem = {
   href: string;
@@ -139,7 +140,12 @@ export default async function EmpresaLayout({
               );
             }
             return (
-              <Link key={item.label} href={href} className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all text-gray-600 hover:text-gray-900 hover:bg-gradient-to-r hover:from-blue-50 hover:to-emerald-50 group">
+              <Link
+                key={item.label}
+                href={href}
+                className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all text-gray-600 hover:text-gray-900 hover:bg-gradient-to-r hover:from-blue-50 hover:to-emerald-50 group"
+                data-tour={item.label.toLowerCase().replace(/\s/g, '-')}
+              >
                 <span className="transition-colors">{item.icon}</span>
                 <span>{item.label}</span>
                 {item.label === "Conversaciones" && pendientes > 0 && (
@@ -189,6 +195,7 @@ export default async function EmpresaLayout({
       <ScrollToTop />
       <GlobalSearch empresaId={id} />
       <KeyboardShortcutsHelp />
+      <EmpresaTour empresaId={id} />
     </div>
   );
 }
