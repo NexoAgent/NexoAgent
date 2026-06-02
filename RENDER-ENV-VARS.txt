@@ -1,0 +1,41 @@
+# 🔐 Variables de Entorno para Render
+# Copia y pega estas en Render Dashboard → Environment
+
+# === CORE ===
+NODE_ENV=production
+
+# === DATABASE ===
+# ⚠️ REEMPLAZA CON TU DATABASE_URL DE PRODUCCIÓN
+DATABASE_URL=postgresql://tu-url-de-produccion-aqui
+
+# === ANTHROPIC ===
+# ⚠️ REEMPLAZA CON TU API KEY
+ANTHROPIC_API_KEY=sk-ant-tu-key-aqui
+
+# === PUSH NOTIFICATIONS (VAPID - YA GENERADAS) ===
+NEXT_PUBLIC_VAPID_PUBLIC_KEY=BFBnPA_Ngs48IdiYrYhUKs1LUQIxm1OUuEfHuV10-Ah0uvJLuBJ3Few2_XHFBiWijV9XvG4OavMX7OsihSWTm68
+VAPID_PRIVATE_KEY=Z5QIHlpWu5esN9dsxKpZwpe9opgCzRHWIyVAXfzIavE
+VAPID_SUBJECT=mailto:perofaga@gmail.com
+
+# === WHATSAPP ===
+# ⚠️ REEMPLAZA CON TUS VALORES
+WHATSAPP_TOKEN=tu-token-de-whatsapp
+WHATSAPP_VERIFY_TOKEN=nexoagent_token
+WHATSAPP_PHONE_NUMBER_ID=tu-phone-number-id
+
+# === NEXTAUTH (YA GENERADO) ===
+NEXTAUTH_URL=https://nexoagent.onrender.com
+NEXTAUTH_SECRET=d92Ym+RTS/RD0ElkrrBHmXlzcca98fgND0bjicP3UfM=
+
+# === GOOGLE CALENDAR (OPCIONAL) ===
+# GOOGLE_CLIENT_ID=tu-client-id
+# GOOGLE_CLIENT_SECRET=tu-client-secret
+
+# ===================================
+# INSTRUCCIONES:
+# 1. Copia TODO este archivo
+# 2. Ve a Render Dashboard
+# 3. En tu Web Service → Environment
+# 4. Pega las variables
+# 5. Reemplaza los valores que dicen "tu-..."
+# ===================================
