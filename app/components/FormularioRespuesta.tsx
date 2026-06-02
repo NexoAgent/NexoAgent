@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState, useTransition } from "react";
 
 interface FormularioRespuestaProps {
   conversacionId: string;
@@ -8,6 +8,8 @@ interface FormularioRespuestaProps {
   modoHumano: boolean;
   enviarMensajeHumano: (formData: FormData) => Promise<void>;
 }
+
+type SendStatus = "idle" | "sending" | "sent" | "error";
 
 export default function FormularioRespuesta({
   conversacionId,
@@ -17,6 +19,8 @@ export default function FormularioRespuesta({
 }: FormularioRespuestaProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
+  const [status, setStatus] = useState<SendStatus>("idle");
+  const [, startTransition] = useTransition();
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     // Si presiona ENTER (sin Shift), enviar el formulario
@@ -30,9 +34,136 @@ export default function FormularioRespuesta({
     // Si presiona Shift+ENTER, permitir salto de línea (comportamiento por defecto)
   };
 
+  const handleSubmit = async (formData: FormData) => {
+    setStatus("sending");
+
+    try {
+      startTransition(async () => {
+        await enviarMensajeHumano(formData);
+        setStatus("sent");
+
+        // Limpiar el textarea
+        if (textareaRef.current) {
+          textareaRef.current.value = "";
+        }
+
+        // Volver a idle después de 2 segundos
+        setTimeout(() => {
+          setStatus("idle");
+        }, 2000);
+      });
+    } catch (error) {
+      console.error("Error al enviar mensaje:", error);
+      setStatus("error");
+
+      // Volver a idle después de 3 segundos
+      setTimeout(() => {
+        setStatus("idle");
+      }, 3000);
+    }
+  };
+
+  const getButtonContent = () => {
+    switch (status) {
+      case "sending":
+        return (
+          <>
+            <svg
+              className="w-4 h-4 animate-spin"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+              />
+            </svg>
+            Enviando...
+          </>
+        );
+      case "sent":
+        return (
+          <>
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M5 13l4 4L19 7"
+              />
+            </svg>
+            Enviado ✓
+          </>
+        );
+      case "error":
+        return (
+          <>
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+            Error
+          </>
+        );
+      default:
+        return (
+          <>
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
+              />
+            </svg>
+            Enviar
+          </>
+        );
+    }
+  };
+
+  const getButtonStyle = () => {
+    if (!modoHumano) {
+      return { background: "#9CA3AF" };
+    }
+
+    switch (status) {
+      case "sending":
+        return { background: "linear-gradient(135deg, #6B7280 0%, #9CA3AF 100%)" };
+      case "sent":
+        return { background: "linear-gradient(135deg, #10B981 0%, #059669 100%)" };
+      case "error":
+        return { background: "linear-gradient(135deg, #EF4444 0%, #DC2626 100%)" };
+      default:
+        return { background: "linear-gradient(135deg, #2B82F0 0%, #15B8C9 100%)" };
+    }
+  };
+
   return (
     <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
-      <form ref={formRef} action={enviarMensajeHumano} className="flex gap-3">
+      <form ref={formRef} action={handleSubmit} className="flex gap-3">
         <input type="hidden" name="conversacionId" value={conversacionId} />
         <input type="hidden" name="empresaId" value={empresaId} />
 
@@ -45,38 +176,21 @@ export default function FormularioRespuesta({
                 ? "Escribe tu respuesta... (Enter para enviar, Shift+Enter para nueva línea)"
                 : "IA está respondiendo automáticamente"
             }
-            disabled={!modoHumano}
+            disabled={!modoHumano || status === "sending"}
             required
             rows={3}
             onKeyDown={handleKeyDown}
-            className="w-full rounded-lg px-4 py-3 text-sm border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed resize-none"
+            className="w-full rounded-lg px-4 py-3 text-sm border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed resize-none transition-all"
           />
         </div>
 
         <button
           type="submit"
-          disabled={!modoHumano}
+          disabled={!modoHumano || status === "sending"}
           className="self-end px-5 py-3 rounded-lg text-sm font-medium text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 hover:shadow-lg"
-          style={{
-            background: modoHumano
-              ? "linear-gradient(135deg, #2B82F0 0%, #15B8C9 100%)"
-              : "#9CA3AF",
-          }}
+          style={getButtonStyle()}
         >
-          <svg
-            className="w-4 h-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
-            />
-          </svg>
-          Enviar
+          {getButtonContent()}
         </button>
       </form>
 
@@ -85,6 +199,33 @@ export default function FormularioRespuesta({
           La IA está respondiendo automáticamente. Activa el modo humano para
           responder tú mismo.
         </p>
+      )}
+
+      {/* Indicador de estado adicional */}
+      {status === "sent" && (
+        <div className="mt-2 flex items-center justify-center gap-1 text-xs text-green-600">
+          <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+            <path
+              fillRule="evenodd"
+              d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+              clipRule="evenodd"
+            />
+          </svg>
+          Mensaje enviado correctamente
+        </div>
+      )}
+
+      {status === "error" && (
+        <div className="mt-2 flex items-center justify-center gap-1 text-xs text-red-600">
+          <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+            <path
+              fillRule="evenodd"
+              d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+              clipRule="evenodd"
+            />
+          </svg>
+          Error al enviar. Intenta de nuevo.
+        </div>
       )}
     </div>
   );

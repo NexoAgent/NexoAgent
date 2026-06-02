@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { reactivarIA, enviarMensajeHumano } from "@/app/actions/conversaciones";
 import FormularioRespuesta from "@/app/components/FormularioRespuesta";
+import ChatMessages from "@/app/components/ChatMessages";
 
 export default async function EmpresaConversacionDetallePage({
   params,
@@ -57,26 +58,7 @@ export default async function EmpresaConversacionDetallePage({
 
       {/* Área de mensajes */}
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 space-y-4 min-h-96 max-h-[600px] overflow-y-auto mb-4">
-        {conversacion.mensajes.length === 0 ? (
-          <p className="text-sm text-gray-400 text-center py-10">Sin mensajes en esta conversación</p>
-        ) : (
-          conversacion.mensajes.map((m) => (
-            <div key={m.id} className={`flex ${m.rol === "CLIENTE" ? "justify-start" : "justify-end"}`}>
-              <div className={`max-w-sm ${m.rol === "CLIENTE" ? "items-start" : "items-end"} flex flex-col gap-1`}>
-                <div className={`px-4 py-3 rounded-2xl text-sm leading-relaxed ${
-                  m.rol === "CLIENTE"
-                    ? "bg-gray-100 text-gray-800 rounded-tl-sm"
-                    : "bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-tr-sm shadow-sm"
-                }`}>
-                  {m.contenido}
-                </div>
-                <p className="text-xs text-gray-400 px-1">
-                  {m.rol === "CLIENTE" ? "Cliente" : "Asistente"} · {m.creadoEn.toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit" })}
-                </p>
-              </div>
-            </div>
-          ))
-        )}
+        <ChatMessages mensajes={conversacion.mensajes} />
       </div>
 
       {/* Formulario de respuesta */}

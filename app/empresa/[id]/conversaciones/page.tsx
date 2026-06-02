@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
+import { formatTimeAgo } from "@/lib/utils";
 
 export default async function EmpresaConversacionesPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -87,7 +88,7 @@ function ConversacionItem({ c, empresaId }: { c: ConversacionItemProps; empresaI
       <div className="flex items-center gap-3 flex-shrink-0">
         <span className="text-xs text-gray-400">{c._count.mensajes} msg</span>
         <span className="text-xs text-gray-400">
-          {c.actualizadoEn.toLocaleDateString("es-MX", { day: "2-digit", month: "short" })}
+          {formatTimeAgo(c.actualizadoEn)}
         </span>
         <svg className="w-4 h-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
       </div>
