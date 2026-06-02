@@ -1,7 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import StatCard from "@/app/components/data/StatCard";
 
 export default async function EmpresaHomePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -50,33 +49,50 @@ export default async function EmpresaHomePage({ params }: { params: Promise<{ id
       )}
 
       <div className="grid grid-cols-3 gap-5 mb-8">
-        <StatCard
-          title="Conversaciones"
-          value={conversaciones}
-          subtitle="totales"
-          trend={conversaciones > 0 ? "up" : undefined}
-          trendValue={conversaciones > 0 ? "+12%" : undefined}
-          icon="💬"
-          actionLabel="Ver todas"
-          actionHref={`/empresa/${id}/conversaciones`}
-        />
-        <StatCard
-          title="Mensajes"
-          value={mensajes}
-          subtitle="procesados por IA"
-          trend={mensajes > 0 ? "up" : undefined}
-          icon="🤖"
-        />
-        <StatCard
-          title="Pendientes"
-          value={pendientes}
-          subtitle="requieren humano"
-          trend={pendientes > 0 ? "down" : undefined}
-          variant={pendientes > 0 ? "warning" : "default"}
-          icon="⚠️"
-          actionLabel={pendientes > 0 ? "Atender" : undefined}
-          actionHref={pendientes > 0 ? `/empresa/${id}/conversaciones` : undefined}
-        />
+        <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm hover:shadow-md transition-shadow">
+          <div className="flex items-start justify-between mb-2">
+            <div>
+              <p className="text-sm text-gray-600">Conversaciones</p>
+              <p className="text-3xl font-bold text-gray-900 mt-1">{conversaciones}</p>
+              <p className="text-xs text-gray-400 mt-1">totales</p>
+            </div>
+            <span className="text-2xl">💬</span>
+          </div>
+          {conversaciones > 0 && (
+            <Link href={`/empresa/${id}/conversaciones`} className="text-xs text-blue-600 hover:text-blue-700 font-medium mt-2 inline-block">
+              Ver todas →
+            </Link>
+          )}
+        </div>
+
+        <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm hover:shadow-md transition-shadow">
+          <div className="flex items-start justify-between mb-2">
+            <div>
+              <p className="text-sm text-gray-600">Mensajes</p>
+              <p className="text-3xl font-bold text-gray-900 mt-1">{mensajes}</p>
+              <p className="text-xs text-gray-400 mt-1">procesados por IA</p>
+            </div>
+            <span className="text-2xl">🤖</span>
+          </div>
+        </div>
+
+        <div className={`rounded-xl border p-5 shadow-sm hover:shadow-md transition-shadow ${
+          pendientes > 0 ? 'bg-amber-50 border-amber-200' : 'bg-white border-gray-200'
+        }`}>
+          <div className="flex items-start justify-between mb-2">
+            <div>
+              <p className={`text-sm ${pendientes > 0 ? 'text-amber-700' : 'text-gray-600'}`}>Pendientes</p>
+              <p className={`text-3xl font-bold mt-1 ${pendientes > 0 ? 'text-amber-900' : 'text-gray-900'}`}>{pendientes}</p>
+              <p className={`text-xs mt-1 ${pendientes > 0 ? 'text-amber-600' : 'text-gray-400'}`}>requieren humano</p>
+            </div>
+            <span className="text-2xl">{pendientes > 0 ? '⚠️' : '✅'}</span>
+          </div>
+          {pendientes > 0 && (
+            <Link href={`/empresa/${id}/conversaciones`} className="text-xs text-amber-700 hover:text-amber-800 font-medium mt-2 inline-block">
+              Atender ahora →
+            </Link>
+          )}
+        </div>
       </div>
 
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
