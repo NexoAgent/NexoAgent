@@ -1,9 +1,15 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { formatTimeAgo } from "@/lib/utils";
+import Breadcrumbs from "@/app/components/Breadcrumbs";
 
 export default async function EmpresaConversacionesPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+
+  const empresa = await prisma.empresa.findUnique({
+    where: { id },
+    select: { nombre: true },
+  });
 
   const conversaciones = await prisma.conversacion.findMany({
     where: { empresaId: id },
@@ -19,6 +25,9 @@ export default async function EmpresaConversacionesPage({ params }: { params: Pr
 
   return (
     <div>
+      {/* Breadcrumbs */}
+      <Breadcrumbs empresaId={id} empresaNombre={empresa?.nombre} />
+
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900">Conversaciones</h1>
         <p className="text-gray-500 text-sm mt-1">{conversaciones.length} chats en total</p>

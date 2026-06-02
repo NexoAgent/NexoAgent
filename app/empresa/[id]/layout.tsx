@@ -7,6 +7,9 @@ import { notFound, redirect } from "next/navigation";
 import MobileMenu from "@/app/components/MobileMenu";
 import NotificationToggle from "@/app/components/NotificationToggle";
 import NotificationSoundPlayer from "@/app/components/NotificationSoundPlayer";
+import ScrollToTop from "@/app/components/ScrollToTop";
+import GlobalSearch from "@/app/components/GlobalSearch";
+import KeyboardShortcutsHelp from "@/app/components/KeyboardShortcutsHelp";
 
 type NavItem = {
   href: string;
@@ -181,8 +184,11 @@ export default async function EmpresaLayout({
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8">{children}</div>
       </main>
 
-      {/* Reproductor de sonidos de notificaciones */}
+      {/* Componentes globales */}
       <NotificationSoundPlayer />
+      <ScrollToTop />
+      <GlobalSearch empresaId={id} />
+      <KeyboardShortcutsHelp />
     </div>
   );
 }
