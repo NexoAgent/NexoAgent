@@ -10,9 +10,9 @@ export default function ScrollToTop() {
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
-    // Mostrar el botón cuando el scroll supera 300px
+    // Mostrar el botón cuando el scroll supera 100px (más bajo para que aparezca antes)
     const toggleVisibility = () => {
-      if (window.scrollY > 300) {
+      if (window.scrollY > 100) {
         setIsVisible(true);
       } else {
         setIsVisible(false);
@@ -20,6 +20,9 @@ export default function ScrollToTop() {
     };
 
     window.addEventListener("scroll", toggleVisibility);
+
+    // Check initial position
+    toggleVisibility();
 
     return () => {
       window.removeEventListener("scroll", toggleVisibility);
@@ -40,7 +43,7 @@ export default function ScrollToTop() {
   return (
     <button
       onClick={scrollToTop}
-      className="fixed bottom-6 right-6 z-50 p-3 rounded-full shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-110 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+      className="fixed bottom-8 right-8 z-[9999] p-4 rounded-full shadow-2xl transition-all duration-300 hover:shadow-xl hover:scale-110 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 animate-bounce-in"
       style={{
         background: "linear-gradient(135deg, #2B82F0 0%, #15B8C9 100%)",
       }}
