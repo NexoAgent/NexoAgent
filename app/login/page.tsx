@@ -1,19 +1,7 @@
-import { signIn } from "@/lib/auth";
+import { login } from "@/app/actions/auth";
 import Image from "next/image";
 
 export default function LoginPage() {
-  async function handleLogin(formData: FormData) {
-    "use server";
-
-    const email = formData.get("email") as string;
-    const password = formData.get("password") as string;
-
-    await signIn("credentials", {
-      email,
-      password,
-      redirectTo: "/dashboard",
-    });
-  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-cyan-50 to-emerald-50 relative overflow-hidden">
@@ -38,7 +26,7 @@ export default function LoginPage() {
           <p className="text-gray-600 text-sm">Inicia sesión para continuar</p>
         </div>
 
-        <form action={handleLogin} className="space-y-6">
+        <form action={login} className="space-y-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Email
