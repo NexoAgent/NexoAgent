@@ -39,10 +39,17 @@ export default function Tooltip({
   };
 
   const arrowClasses = {
-    top: "top-full left-1/2 -translate-x-1/2 border-t-gray-900",
-    bottom: "bottom-full left-1/2 -translate-x-1/2 border-b-gray-900",
-    left: "left-full top-1/2 -translate-y-1/2 border-l-gray-900",
-    right: "right-full top-1/2 -translate-y-1/2 border-r-gray-900",
+    top: "top-full left-1/2 -translate-x-1/2",
+    bottom: "bottom-full left-1/2 -translate-x-1/2",
+    left: "left-full top-1/2 -translate-y-1/2",
+    right: "right-full top-1/2 -translate-y-1/2",
+  };
+
+  const arrowBorderClasses = {
+    top: "border-t-[#0E2436]",
+    bottom: "border-b-[#0E2436]",
+    left: "border-l-[#0E2436]",
+    right: "border-r-[#0E2436]",
   };
 
   return (
@@ -59,17 +66,19 @@ export default function Tooltip({
       {isVisible && (
         <div
           className={cn(
-            "absolute z-50 px-3 py-2 text-sm text-white bg-gray-900 rounded-lg shadow-lg whitespace-nowrap",
+            "absolute z-50 px-3 py-2 text-xs text-white rounded-lg shadow-xl whitespace-nowrap animate-in fade-in-0 zoom-in-95 duration-200",
             positionClasses[position],
             className
           )}
+          style={{ background: "#0E2436" }}
           role="tooltip"
         >
           {content}
           <div
             className={cn(
               "absolute w-0 h-0 border-4 border-transparent",
-              arrowClasses[position]
+              arrowClasses[position],
+              arrowBorderClasses[position]
             )}
           />
         </div>

@@ -4,6 +4,7 @@ import { useFormState } from "react-dom";
 import { crearContacto } from "@/app/actions/crm";
 import LoadingButton from "@/app/components/ui/LoadingButton";
 import ErrorMessage from "@/app/components/ui/ErrorMessage";
+import { HelpIcon } from "@/app/components/help/Tooltip";
 
 interface ContactFormProps {
   empresaId: string;
@@ -71,8 +72,9 @@ export default function ContactForm({ empresaId }: ContactFormProps) {
         </div>
 
         <div>
-          <label className="block text-xs font-medium mb-1" style={{ color: "#41566B" }}>
+          <label className="block text-xs font-medium mb-1 flex items-center gap-1" style={{ color: "#41566B" }}>
             Tipo
+            <HelpIcon tooltip="Lead: contacto potencial | Cliente: ya compró | Proveedor: proveedor de servicios" />
           </label>
           <select
             name="tipo"

@@ -6,6 +6,8 @@ import EmptyState from "@/app/components/help/EmptyState";
 import CRMHeader from "@/app/components/pages/CRMHeader";
 import ContactForm from "@/app/components/forms/ContactForm";
 import { FilterBarWithUrl } from "@/app/components/data/FilterBar";
+import ContactBadge from "@/app/components/crm/ContactBadge";
+import ConversationsCount from "@/app/components/crm/ConversationsCount";
 
 const TIPOS = [
   { key: "TODOS", label: "Todos" },
@@ -120,10 +122,13 @@ export default async function CRMPage({
                       <p className="text-xs mt-0.5" style={{ color: "#73869A" }}>{c.telefono}</p>
                     </div>
                     <div className="flex items-center gap-3 flex-shrink-0">
-                      <span className="text-xs px-2 py-0.5 rounded-full font-medium" style={{ background: badge.bg, color: badge.color }}>
-                        {badge.label}
-                      </span>
-                      <span className="text-xs" style={{ color: "#73869A" }}>{c._count.conversaciones} conv.</span>
+                      <ContactBadge
+                        tipo={c.tipo}
+                        label={badge.label}
+                        color={badge.color}
+                        bg={badge.bg}
+                      />
+                      <ConversationsCount count={c._count.conversaciones} />
                       <svg className="w-4 h-4" style={{ color: "#E2E9F0" }} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
                     </div>
                   </Link>

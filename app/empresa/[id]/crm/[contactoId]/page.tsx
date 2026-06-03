@@ -4,6 +4,8 @@ import { notFound } from "next/navigation";
 import { actualizarContacto } from "@/app/actions/crm";
 import DeleteContactButton from "@/app/components/actions/DeleteContactButton";
 import LoadingButton from "@/app/components/ui/LoadingButton";
+import ContactBadge from "@/app/components/crm/ContactBadge";
+import Tooltip, { HelpIcon } from "@/app/components/help/Tooltip";
 
 const BADGE: Record<string, { label: string; color: string; bg: string }> = {
   LEAD:      { label: "Lead",      color: "#2B82F0", bg: "rgba(43,130,240,0.08)" },
@@ -53,9 +55,12 @@ export default async function ContactoDetallePage({
           </h1>
           <p className="text-xs" style={{ color: "#73869A" }}>{contacto.telefono}</p>
         </div>
-        <span className="ml-2 text-xs px-2.5 py-1 rounded-full font-medium" style={{ background: badge.bg, color: badge.color }}>
-          {badge.label}
-        </span>
+        <ContactBadge
+          tipo={contacto.tipo}
+          label={badge.label}
+          color={badge.color}
+          bg={badge.bg}
+        />
       </div>
 
       {guardado && (
@@ -80,7 +85,10 @@ export default async function ContactoDetallePage({
                 style={{ border: "1px solid #E2E9F0", color: "#0E2436" }} />
             </div>
             <div>
-              <label className="block text-xs font-medium mb-1" style={{ color: "#41566B" }}>Tipo</label>
+              <label className="block text-xs font-medium mb-1 flex items-center gap-1" style={{ color: "#41566B" }}>
+                Tipo
+                <HelpIcon tooltip="Lead: contacto potencial | Cliente: ya compró | Proveedor: proveedor de servicios" />
+              </label>
               <select name="tipo" defaultValue={contacto.tipo}
                 className="w-full rounded-lg px-3 py-2 text-sm focus:outline-none"
                 style={{ border: "1px solid #E2E9F0", color: "#0E2436" }}>
@@ -90,7 +98,10 @@ export default async function ContactoDetallePage({
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium mb-1" style={{ color: "#41566B" }}>Notas internas</label>
+              <label className="block text-xs font-medium mb-1 flex items-center gap-1" style={{ color: "#41566B" }}>
+                Notas internas
+                <HelpIcon tooltip="Información privada sobre este contacto (no se comparte)" />
+              </label>
               <textarea name="notas" rows={4} defaultValue={contacto.notas ?? ""}
                 placeholder="Notas sobre este contacto..."
                 className="w-full rounded-lg px-3 py-2 text-sm focus:outline-none resize-none"
