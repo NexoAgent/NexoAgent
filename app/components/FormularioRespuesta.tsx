@@ -199,23 +199,29 @@ export default function FormularioRespuesta({
         </button>
       </form>
 
-      {!modoHumano && activarModoHumano && (
+      {!modoHumano && (
         <div className="mt-3 flex flex-col items-center gap-3 p-3 rounded-lg" style={{ background: "rgba(251,146,60,0.08)", border: "1px solid rgba(251,146,60,0.2)" }}>
-          <p className="text-xs text-center" style={{ color: "#FB923C" }}>
+          <p className="text-xs text-center font-medium" style={{ color: "#FB923C" }}>
             🤖 La IA está respondiendo automáticamente
           </p>
-          <form action={activarModoHumano}>
-            <input type="hidden" name="conversacionId" value={conversacionId} />
-            <input type="hidden" name="empresaId" value={empresaId} />
-            <input type="hidden" name="numeroCliente" value={numeroCliente} />
-            <LoadingButton
-              type="submit"
-              className="text-xs font-medium px-5 py-2 rounded-lg text-white transition-all hover:shadow-md"
-              style={{ background: "#FB923C" }}
-            >
-              👤 Tomar control (Modo humano)
-            </LoadingButton>
-          </form>
+          {activarModoHumano ? (
+            <form action={activarModoHumano}>
+              <input type="hidden" name="conversacionId" value={conversacionId} />
+              <input type="hidden" name="empresaId" value={empresaId} />
+              <input type="hidden" name="numeroCliente" value={numeroCliente} />
+              <LoadingButton
+                type="submit"
+                className="text-xs font-medium px-5 py-2 rounded-lg text-white transition-all hover:shadow-md"
+                style={{ background: "#FB923C" }}
+              >
+                👤 Tomar control (Modo humano)
+              </LoadingButton>
+            </form>
+          ) : (
+            <p className="text-xs text-gray-500 text-center">
+              Para tomar control, actualiza la página
+            </p>
+          )}
         </div>
       )}
 
