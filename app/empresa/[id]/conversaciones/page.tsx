@@ -5,8 +5,16 @@ import Breadcrumbs from "@/app/components/Breadcrumbs";
 import ScrollToTop from "@/app/components/ScrollToTop";
 import EmptyState from "@/app/components/help/EmptyState";
 import ConversacionesMobileActions from "@/app/components/ConversacionesMobileActions";
+import { FilterBarWithUrl } from "@/app/components/data/FilterBar";
 
-export default async function EmpresaConversacionesPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function EmpresaConversacionesPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ modo?: string }>;
+}) {
+  const { modo } = await searchParams;
   const { id } = await params;
 
   const empresa = await prisma.empresa.findUnique({
@@ -25,6 +33,13 @@ export default async function EmpresaConversacionesPage({ params }: { params: Pr
 
   const pendientes = conversaciones.filter((c) => c.modoHumano);
   const normales = conversaciones.filter((c) => !c.modoHumano);
+
+  // Filtrar según el modo seleccionado
+  const conversacionesFiltradas = modo === "humano"
+    ? pendientes
+    : modo === "ia"
+    ? normales
+    : conversaciones;
 
   return (
     <div>
@@ -52,31 +67,55 @@ export default async function EmpresaConversacionesPage({ params }: { params: Pr
           ]}
         />
       ) : (
-        <div className="space-y-5">
-          {pendientes.length > 0 && (
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wider mb-3 flex items-center gap-2" style={{ color: "#FB923C" }}>
-                <span className="w-2 h-2 rounded-full inline-block" style={{ background: "#FB923C" }}></span>
-                Requieren atención humana ({pendientes.length})
-              </p>
-              <div className="bg-white rounded-xl shadow-sm divide-y" style={{ border: "1px solid rgba(251,146,60,0.3)", borderColor: "#FCD9BD" }}>
-                {pendientes.map((c) => <ConversacionItem key={c.id} c={c} empresaId={id} />)}
-              </div>
-            </div>
-          )}
+        <>
+          {/* FilterBar */}
+          <div className="mb-6">
+            <FilterBarWithUrl
+              filters={[
+                {
+                  id: "todas",
+                  label: "Todas",
+                  value: "",
+                  count: conversaciones.length,
+                  icon: "💬",
+                },
+                {
+                  id: "humano",
+                  label: "Atención humana",
+                  value: "humano",
+                  count: pendientes.length,
+                  color: "#FB923C",
+                  icon: "⚠️",
+                },
+                {
+                  id: "ia",
+                  label: "IA activa",
+                  value: "ia",
+                  count: normales.length,
+                  color: "#22B26B",
+                  icon: "🤖",
+                },
+              ]}
+              baseUrl={`/empresa/${id}/conversaciones`}
+              queryParam="modo"
+            />
+          </div>
 
-          {normales.length > 0 && (
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wider mb-3 flex items-center gap-2" style={{ color: "#73869A" }}>
-                <span className="w-2 h-2 rounded-full inline-block" style={{ background: "#22B26B" }}></span>
-                Activas con IA ({normales.length})
-              </p>
-              <div className="bg-white rounded-xl shadow-sm divide-y" style={{ border: "1px solid #E2E9F0", borderColor: "#E2E9F0" }}>
-                {normales.map((c) => <ConversacionItem key={c.id} c={c} empresaId={id} />)}
-              </div>
+          {/* Lista de conversaciones */}
+          {conversacionesFiltradas.length === 0 ? (
+            <div className="bg-white rounded-xl p-10" style={{ border: "1px solid #E2E9F0" }}>
+              <EmptyState
+                icon="🔍"
+                title="No hay conversaciones en esta categoría"
+                description="Intenta con otro filtro"
+              />
+            </div>
+          ) : (
+            <div className="bg-white rounded-xl shadow-sm divide-y" style={{ border: "1px solid #E2E9F0" }}>
+              {conversacionesFiltradas.map((c) => <ConversacionItem key={c.id} c={c} empresaId={id} />)}
             </div>
           )}
-        </div>
+        </>
       )}
 
       <ScrollToTop />

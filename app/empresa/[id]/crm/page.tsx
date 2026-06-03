@@ -5,6 +5,7 @@ import ScrollToTop from "@/app/components/ScrollToTop";
 import EmptyState from "@/app/components/help/EmptyState";
 import CRMHeader from "@/app/components/pages/CRMHeader";
 import ContactForm from "@/app/components/forms/ContactForm";
+import { FilterBarWithUrl } from "@/app/components/data/FilterBar";
 
 const TIPOS = [
   { key: "TODOS", label: "Todos" },
@@ -67,28 +68,20 @@ export default async function CRMPage({
       </div>
 
       {/* Filtros */}
-      <div className="flex gap-2 mb-6">
-        {TIPOS.map((t) => {
-          const count = t.key === "TODOS"
-            ? totales.reduce((a, b) => a + b._count, 0)
-            : contar(t.key);
-          const activo = (tipo ?? "TODOS") === t.key;
-          return (
-            <Link
-              key={t.key}
-              href={`/empresa/${id}/crm?tipo=${t.key}`}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-colors"
-              style={{
-                background: activo ? "#0E2436" : "white",
-                color: activo ? "white" : "#41566B",
-                border: "1px solid #E2E9F0",
-              }}
-            >
-              {t.label}
-              <span className="text-xs opacity-60">{count}</span>
-            </Link>
-          );
-        })}
+      <div className="mb-6">
+        <FilterBarWithUrl
+          filters={TIPOS.map((t) => ({
+            id: t.key,
+            label: t.label,
+            value: t.key,
+            count: t.key === "TODOS"
+              ? totales.reduce((a, b) => a + b._count, 0)
+              : contar(t.key),
+            color: t.key === "TODOS" ? undefined : BADGE[t.key]?.color,
+          }))}
+          baseUrl={`/empresa/${id}/crm`}
+          queryParam="tipo"
+        />
       </div>
 
       <div className="grid grid-cols-3 gap-6">

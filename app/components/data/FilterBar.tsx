@@ -1,6 +1,8 @@
 "use client";
 
 import { ReactNode } from "react";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 
 export interface Filter {
@@ -9,6 +11,7 @@ export interface Filter {
   value: string;
   count?: number;
   icon?: ReactNode;
+  color?: string;
 }
 
 interface FilterBarProps {
@@ -19,13 +22,13 @@ interface FilterBarProps {
 }
 
 /**
- * Barra de filtros con tabs
+ * Barra de filtros con tabs y contadores visuales (con state local)
  *
  * Uso:
  * <FilterBar
  *   filters={[
- *     { id: "all", label: "Todas", value: "all", count: 50 },
- *     { id: "pending", label: "Pendientes", value: "pending", count: 5 },
+ *     { id: "all", label: "Todos", value: "all", count: 50 },
+ *     { id: "lead", label: "Leads", value: "LEAD", count: 25, color: "#2B82F0" },
  *   ]}
  *   activeFilter={activeFilter}
  *   onChange={setActiveFilter}
@@ -46,20 +49,26 @@ export default function FilterBar({
     >
       {filters.map((filter) => {
         const isActive = activeFilter === filter.id;
+        const hasColor = filter.color;
 
         return (
           <button
             key={filter.id}
             onClick={() => onChange(filter.id)}
             className={cn(
-              "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap",
-              isActive
-                ? "bg-blue-500 text-white shadow-md"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap hover:shadow-sm",
+              isActive ? "text-white shadow-sm" : "bg-white hover:bg-gray-50"
             )}
+            style={
+              isActive && hasColor
+                ? { background: filter.color }
+                : isActive
+                ? { background: "#0E2436" }
+                : { border: "1px solid #E2E9F0", color: "#41566B" }
+            }
           >
             {filter.icon && (
-              <span className={cn(isActive ? "text-white" : "text-gray-500")}>
+              <span className="text-base">
                 {filter.icon}
               </span>
             )}
@@ -67,16 +76,100 @@ export default function FilterBar({
             {filter.count !== undefined && (
               <span
                 className={cn(
-                  "px-2 py-0.5 rounded-full text-xs font-semibold",
-                  isActive
-                    ? "bg-blue-600 text-white"
-                    : "bg-gray-200 text-gray-600"
+                  "px-2 py-0.5 rounded-full text-xs font-semibold transition-all",
+                  isActive ? "bg-white/20" : "bg-gray-100"
                 )}
+                style={
+                  isActive
+                    ? { color: "white" }
+                    : { color: filter.color || "#73869A" }
+                }
               >
                 {filter.count}
               </span>
             )}
           </button>
+        );
+      })}
+    </div>
+  );
+}
+
+/**
+ * FilterBar con navegación por URL
+ *
+ * Uso:
+ * <FilterBarWithUrl
+ *   filters={[...]}
+ *   baseUrl="/empresa/123/crm"
+ *   queryParam="tipo"
+ * />
+ */
+export function FilterBarWithUrl({
+  filters,
+  baseUrl,
+  queryParam = "filter",
+  className,
+}: {
+  filters: Filter[];
+  baseUrl: string;
+  queryParam?: string;
+  className?: string;
+}) {
+  const searchParams = useSearchParams();
+  const activeFilter = searchParams.get(queryParam) || filters[0]?.id;
+
+  const buildUrl = (filterKey: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+
+    if (filterKey === filters[0]?.id) {
+      params.delete(queryParam);
+    } else {
+      params.set(queryParam, filterKey);
+    }
+
+    const queryString = params.toString();
+    return queryString ? `${baseUrl}?${queryString}` : baseUrl;
+  };
+
+  return (
+    <div className={cn("flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide", className)}>
+      {filters.map((filter) => {
+        const isActive = activeFilter === filter.id;
+        const hasColor = filter.color;
+
+        return (
+          <Link
+            key={filter.id}
+            href={buildUrl(filter.id)}
+            className={cn(
+              "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap hover:shadow-sm",
+              isActive ? "text-white shadow-sm" : "bg-white hover:bg-gray-50"
+            )}
+            style={
+              isActive && hasColor
+                ? { background: filter.color }
+                : isActive
+                ? { background: "#0E2436" }
+                : { border: "1px solid #E2E9F0", color: "#41566B" }
+            }
+          >
+            {filter.icon && <span className="text-base">{filter.icon}</span>}
+            <span>{filter.label}</span>
+            {filter.count !== undefined && (
+              <span
+                className={cn(
+                  "px-2 py-0.5 rounded-full text-xs font-semibold",
+                  isActive ? "bg-white/20" : "bg-gray-100"
+                )}
+                style={
+                  isActive ? { color: "white" } : { color: filter.color || "#73869A" }
+                }
+              >
+                {filter.count}
+              </span>
+            )}
+          </Link>
         );
       })}
     </div>
