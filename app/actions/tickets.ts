@@ -12,6 +12,78 @@ import {
 } from "@/lib/email";
 
 /**
+ * Crear un ticket público (sin autenticación) - para contacto/soporte
+ */
+export async function crearTicketPublico(formData: FormData) {
+  const nombre = formData.get("nombre") as string;
+  const email = formData.get("email") as string;
+  const titulo = formData.get("titulo") as string;
+  const descripcion = formData.get("descripcion") as string;
+
+  if (!nombre || !email || !titulo || !descripcion) {
+    redirect("/contacto?error=Todos+los+campos+son+requeridos");
+  }
+
+  // Buscar o crear usuario temporal para tickets públicos
+  let usuario = await prisma.usuario.findUnique({
+    where: { email },
+  });
+
+  if (!usuario) {
+    // Crear usuario temporal con rol CLIENTE
+    usuario = await prisma.usuario.create({
+      data: {
+        email,
+        nombre,
+        rol: "CLIENTE",
+        // Sin password - no podrán hacer login, solo se usa para tracking de tickets
+      },
+    });
+  }
+
+  // Crear el ticket
+  const ticket = await prisma.ticket.create({
+    data: {
+      titulo,
+      descripcion,
+      prioridad: "MEDIA",
+      categoria: "GENERAL",
+      creadoPorId: usuario.id,
+    },
+  });
+
+  // Crear mensaje inicial del ticket
+  await prisma.mensajeTicket.create({
+    data: {
+      ticketId: ticket.id,
+      usuarioId: usuario.id,
+      mensaje: descripcion,
+    },
+  });
+
+  // Enviar emails a usuarios PROVEEDOR
+  const proveedores = await prisma.usuario.findMany({
+    where: { rol: "PROVEEDOR" },
+    select: { email: true, nombre: true },
+  });
+
+  for (const proveedor of proveedores) {
+    enviarEmailNuevoTicket({
+      ticketId: ticket.id,
+      titulo,
+      descripcion,
+      prioridad: "MEDIA",
+      categoria: "GENERAL",
+      creadoPor: `${nombre} (${email})`,
+      destinatarioEmail: proveedor.email,
+      destinatarioNombre: proveedor.nombre,
+    }).catch((err) => console.error("Error enviando email:", err));
+  }
+
+  redirect("/contacto?success=true");
+}
+
+/**
  * Crear un nuevo ticket
  */
 export async function crearTicket(formData: FormData) {

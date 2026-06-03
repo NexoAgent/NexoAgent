@@ -108,7 +108,10 @@ export default function LoginPage({
         </form>
 
         <p className="text-center text-sm text-gray-600 mt-4">
-          ¿Problemas para acceder? Contacta al administrador
+          ¿Problemas para acceder?{" "}
+          <Link href="/contacto" className="text-blue-600 hover:text-blue-700 font-medium">
+            Contacta al administrador
+          </Link>
         </p>
 
         <div className="mt-6 pt-4 border-t border-gray-100">
