@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { reactivarIA, enviarMensajeHumano } from "@/app/actions/conversaciones";
 import FormularioRespuesta from "@/app/components/FormularioRespuesta";
 import ChatMessages from "@/app/components/ChatMessages";
+import LoadingButton from "@/app/components/ui/LoadingButton";
 
 export default async function EmpresaConversacionDetallePage({
   params,
@@ -23,27 +24,46 @@ export default async function EmpresaConversacionDetallePage({
   if (!conversacion || conversacion.empresaId !== id) notFound();
 
   return (
-    <div className="max-w-2xl">
+    <div className="max-w-3xl mx-auto">
       <div className="flex items-center gap-3 mb-6">
-        <Link href={`/empresa/${id}/conversaciones`} className="text-gray-400 hover:text-gray-600 transition-colors">
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+        <Link
+          href={`/empresa/${id}/conversaciones`}
+          className="transition-colors hover:opacity-70"
+          style={{ color: "#73869A" }}
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
         </Link>
         <div className="flex-1">
-          <h1 className="text-lg font-bold text-gray-900">{conversacion.numeroCliente}</h1>
-          <p className="text-xs text-gray-400">{conversacion.mensajes.length} mensajes</p>
+          <h1 className="text-xl font-bold font-sora" style={{ color: "#0E2436" }}>
+            {conversacion.numeroCliente}
+          </h1>
+          <p className="text-xs mt-0.5" style={{ color: "#73869A" }}>
+            {conversacion.mensajes.length} mensaje{conversacion.mensajes.length !== 1 ? "s" : ""}
+          </p>
         </div>
         <div className="flex items-center gap-2">
           {conversacion.modoHumano ? (
             <form action={reactivarIA}>
               <input type="hidden" name="id" value={conversacion.id} />
-              <button type="submit" className="flex items-center gap-1.5 text-xs bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded-lg font-medium transition-colors">
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+              <LoadingButton
+                type="submit"
+                className="flex items-center gap-1.5 text-xs text-white px-3 py-1.5 rounded-lg font-medium transition-opacity hover:opacity-90"
+                style={{ background: "#FB923C" }}
+              >
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
                 Reactivar IA
-              </button>
+              </LoadingButton>
             </form>
           ) : (
-            <span className="flex items-center gap-1.5 text-xs text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-lg font-medium">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+            <span
+              className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg font-medium"
+              style={{ color: "#22B26B", background: "rgba(34,178,107,0.08)" }}
+            >
+              <span className="w-1.5 h-1.5 rounded-full" style={{ background: "#22B26B" }}></span>
               IA activa
             </span>
           )}
@@ -51,13 +71,19 @@ export default async function EmpresaConversacionDetallePage({
       </div>
 
       {conversacion.modoHumano && (
-        <div className="mb-4 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-sm text-amber-700">
+        <div
+          className="mb-4 rounded-xl px-4 py-3 text-sm"
+          style={{ background: "rgba(251,146,60,0.08)", border: "1px solid rgba(251,146,60,0.2)", color: "#FB923C" }}
+        >
           💬 Modo humano activo. Puedes responder al cliente usando el formulario de abajo.
         </div>
       )}
 
       {/* Área de mensajes */}
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 space-y-4 min-h-96 max-h-[600px] overflow-y-auto mb-4">
+      <div
+        className="bg-white rounded-xl shadow-sm p-6 space-y-4 min-h-96 max-h-[600px] overflow-y-auto mb-4"
+        style={{ border: "1px solid #E2E9F0" }}
+      >
         <ChatMessages mensajes={conversacion.mensajes} />
       </div>
 

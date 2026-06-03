@@ -2,6 +2,9 @@ import { prisma } from "@/lib/prisma";
 import { crearCita, cambiarEstadoCita, desconectarGoogleCalendar } from "@/app/actions/agenda";
 import { EstadoCita } from "@/app/generated/prisma/client";
 import { getAuthUrl } from "@/lib/google-calendar";
+import EmptyState from "@/app/components/help/EmptyState";
+import LoadingButton from "@/app/components/ui/LoadingButton";
+import ScrollToTop from "@/app/components/ScrollToTop";
 
 function formatearFecha(fecha: Date): string {
   return new Intl.DateTimeFormat("es-MX", {
@@ -20,14 +23,14 @@ function formatearHora(fecha: Date): string {
   }).format(fecha);
 }
 
-function obtenerColorEstado(estado: EstadoCita): string {
+function obtenerColorEstado(estado: EstadoCita): { bg: string; color: string } {
   switch (estado) {
     case "CONFIRMADA":
-      return "bg-green-100 text-green-800 border-green-300";
+      return { bg: "rgba(34,178,107,0.08)", color: "#22B26B" };
     case "CANCELADA":
-      return "bg-red-100 text-red-800 border-red-300";
+      return { bg: "rgba(239,68,68,0.08)", color: "#EF4444" };
     default:
-      return "bg-yellow-100 text-yellow-800 border-yellow-300";
+      return { bg: "rgba(251,146,60,0.08)", color: "#FB923C" };
   }
 }
 
@@ -80,71 +83,94 @@ export default async function AgendaPage({
   const citasCanceladas = citas.filter((c) => c.estado === "CANCELADA");
 
   return (
-    <div className="max-w-7xl mx-auto p-6 space-y-6">
-      {/* Header con KPIs */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-gray-900">📅 Agenda</h1>
+    <div>
+      {/* Header */}
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold font-sora" style={{ color: "#0E2436" }}>
+          📅 Agenda
+        </h1>
+        <p className="text-sm mt-1" style={{ color: "#73869A" }}>
+          {citas.length} citas/tareas · Gestiona tu calendario
+        </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white p-4 rounded-lg shadow border-l-4 border-blue-500">
-          <p className="text-sm text-gray-600">Citas/Tareas hoy</p>
-          <p className="text-3xl font-bold text-blue-600">{citasHoy}</p>
+      {/* KPIs */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div className="bg-white rounded-xl p-5" style={{ border: "1px solid #E2E9F0" }}>
+          <p className="text-3xl font-bold font-sora" style={{ color: "#2B82F0" }}>{citasHoy}</p>
+          <p className="text-sm font-medium mt-1" style={{ color: "#0E2436" }}>Citas/Tareas hoy</p>
+          <p className="text-xs mt-0.5" style={{ color: "#73869A" }}>pendientes de atender</p>
         </div>
-        <div className="bg-white p-4 rounded-lg shadow border-l-4 border-green-500">
-          <p className="text-sm text-gray-600">Próximas citas/tareas</p>
-          <p className="text-3xl font-bold text-green-600">{citasProximas}</p>
+        <div className="bg-white rounded-xl p-5" style={{ border: "1px solid #E2E9F0" }}>
+          <p className="text-3xl font-bold font-sora" style={{ color: "#22B26B" }}>{citasProximas}</p>
+          <p className="text-sm font-medium mt-1" style={{ color: "#0E2436" }}>Próximas citas/tareas</p>
+          <p className="text-xs mt-0.5" style={{ color: "#73869A" }}>confirmadas</p>
         </div>
-        <div className="bg-white p-4 rounded-lg shadow border-l-4 border-purple-500">
-          <p className="text-sm text-gray-600">Total de citas/tareas</p>
-          <p className="text-3xl font-bold text-purple-600">{citas.length}</p>
+        <div className="bg-white rounded-xl p-5" style={{ border: "1px solid #E2E9F0" }}>
+          <p className="text-3xl font-bold font-sora" style={{ color: "#15B8C9" }}>{citas.length}</p>
+          <p className="text-sm font-medium mt-1" style={{ color: "#0E2436" }}>Total de citas/tareas</p>
+          <p className="text-xs mt-0.5" style={{ color: "#73869A" }}>histórico completo</p>
         </div>
       </div>
 
       {/* Integración Google Calendar */}
-      <div className="bg-white p-6 rounded-lg shadow">
-        <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+      <div className="bg-white rounded-xl p-6 mb-6" style={{ border: "1px solid #E2E9F0" }}>
+        <h2 className="text-lg font-semibold font-sora mb-4 flex items-center gap-2" style={{ color: "#0E2436" }}>
           📅 Integración Google Calendar
         </h2>
 
         {empresa.googleAccessToken ? (
           <div className="space-y-4">
-            <div className="flex items-center gap-3 p-4 bg-green-50 border border-green-200 rounded-lg">
-              <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="flex items-center gap-3 p-4 rounded-lg" style={{ background: "rgba(34,178,107,0.08)", border: "1px solid rgba(34,178,107,0.2)" }}>
+              <svg className="w-6 h-6 flex-shrink-0" style={{ color: "#22B26B" }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               <div className="flex-1">
-                <p className="font-medium text-green-900">Conectado a Google Calendar</p>
-                <p className="text-sm text-green-700">
-                  Las citas/tareas se sincronizarán automáticamente con tu calendario de Google
+                <p className="font-medium text-sm" style={{ color: "#22B26B" }}>Conectado a Google Calendar</p>
+                <p className="text-xs mt-0.5" style={{ color: "#73869A" }}>
+                  Las citas/tareas se sincronizarán automáticamente
                 </p>
               </div>
             </div>
             <form action={desconectarGoogleCalendar}>
               <input type="hidden" name="empresaId" value={id} />
-              <button
+              <LoadingButton
                 type="submit"
-                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition text-sm"
+                className="px-4 py-2 text-white rounded-lg transition text-sm font-medium"
+                style={{ background: "#EF4444" }}
               >
                 Desconectar Google Calendar
-              </button>
+              </LoadingButton>
             </form>
           </div>
         ) : (
           <div className="space-y-4">
-            <p className="text-gray-700">
+            <p className="text-sm" style={{ color: "#41566B" }}>
               Conecta tu cuenta de Google para sincronizar automáticamente las citas/tareas con Google Calendar.
-              Esto te permitirá:
             </p>
-            <ul className="list-disc list-inside space-y-2 text-gray-600 text-sm">
-              <li>Ver todas tus citas/tareas en tu calendario personal</li>
-              <li>Recibir notificaciones y recordatorios de Google</li>
-              <li>Compartir tu disponibilidad con otros</li>
-              <li>Acceder desde cualquier dispositivo</li>
+            <ul className="space-y-2 text-sm" style={{ color: "#73869A" }}>
+              <li className="flex items-start gap-2">
+                <svg className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: "#2B82F0" }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                Ver todas tus citas en tu calendario personal
+              </li>
+              <li className="flex items-start gap-2">
+                <svg className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: "#2B82F0" }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                Recibir notificaciones y recordatorios de Google
+              </li>
+              <li className="flex items-start gap-2">
+                <svg className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: "#2B82F0" }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                Acceder desde cualquier dispositivo
+              </li>
             </ul>
             <a
               href={getAuthUrl(id)}
-              className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium"
+              className="inline-flex items-center gap-2 px-6 py-3 text-white rounded-lg transition font-medium text-sm grad-bg hover:opacity-90"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -159,56 +185,63 @@ export default async function AgendaPage({
       </div>
 
       {/* Formulario para nueva cita */}
-      <div className="bg-white p-6 rounded-lg shadow">
-        <h2 className="text-xl font-semibold mb-4">➕ Agendar nueva cita/tarea</h2>
+      <div className="bg-white rounded-xl p-6 mb-6" style={{ border: "1px solid #E2E9F0" }}>
+        <h2 className="text-lg font-semibold font-sora mb-5" style={{ color: "#0E2436" }}>
+          ➕ Agendar nueva cita/tarea
+        </h2>
         <form action={crearCita} className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <input type="hidden" name="empresaId" value={id} />
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Nombre del cliente *
+            <label className="block text-xs font-medium mb-1.5" style={{ color: "#41566B" }}>
+              Nombre del cliente <span style={{ color: "#DC2626" }}>*</span>
             </label>
             <input
               type="text"
               name="nombreCliente"
               required
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="Ej: Juan Pérez"
+              className="w-full px-3 py-2.5 rounded-lg text-sm focus:outline-none"
+              style={{ border: "1px solid #E2E9F0", color: "#0E2436" }}
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Teléfono (WhatsApp) *
+            <label className="block text-xs font-medium mb-1.5" style={{ color: "#41566B" }}>
+              Teléfono (WhatsApp) <span style={{ color: "#DC2626" }}>*</span>
             </label>
             <input
               type="tel"
               name="telefono"
               required
-              placeholder="5212345678901"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="+521234567890"
+              className="w-full px-3 py-2.5 rounded-lg text-sm focus:outline-none"
+              style={{ border: "1px solid #E2E9F0", color: "#0E2436" }}
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Fecha y hora de inicio *
+            <label className="block text-xs font-medium mb-1.5" style={{ color: "#41566B" }}>
+              Fecha y hora de inicio <span style={{ color: "#DC2626" }}>*</span>
             </label>
             <input
               type="datetime-local"
               name="inicio"
               required
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2.5 rounded-lg text-sm focus:outline-none"
+              style={{ border: "1px solid #E2E9F0", color: "#0E2436" }}
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Duración (minutos) *
+            <label className="block text-xs font-medium mb-1.5" style={{ color: "#41566B" }}>
+              Duración <span style={{ color: "#DC2626" }}>*</span>
             </label>
             <select
               name="duracion"
               defaultValue="60"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2.5 rounded-lg text-sm focus:outline-none"
+              style={{ border: "1px solid #E2E9F0", color: "#0E2436" }}
             >
               <option value="15">15 min</option>
               <option value="30">30 min</option>
@@ -220,157 +253,186 @@ export default async function AgendaPage({
           </div>
 
           <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-xs font-medium mb-1.5" style={{ color: "#41566B" }}>
               Notas adicionales
             </label>
             <textarea
               name="notas"
               rows={3}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="Detalles de la cita o tarea..."
+              className="w-full px-3 py-2.5 rounded-lg text-sm focus:outline-none resize-none"
+              style={{ border: "1px solid #E2E9F0", color: "#0E2436" }}
             />
           </div>
 
           <div className="md:col-span-2">
-            <button
+            <LoadingButton
               type="submit"
-              className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium"
+              className="w-full text-white text-sm font-medium py-2.5 rounded-lg transition-opacity hover:opacity-90 grad-bg"
             >
               Crear cita/tarea
-            </button>
+            </LoadingButton>
           </div>
         </form>
       </div>
 
       {/* Lista de citas futuras */}
       {citasFuturas.length > 0 && (
-        <div className="bg-white p-6 rounded-lg shadow">
-          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-            🔜 Próximas citas/tareas ({citasFuturas.length})
+        <div className="bg-white rounded-xl p-6 mb-6" style={{ border: "1px solid #E2E9F0" }}>
+          <h2 className="text-lg font-semibold font-sora mb-4 flex items-center gap-2" style={{ color: "#0E2436" }}>
+            🔜 Próximas citas/tareas
+            <span className="text-xs px-2 py-0.5 rounded-full font-medium" style={{ background: "rgba(43,130,240,0.08)", color: "#2B82F0" }}>
+              {citasFuturas.length}
+            </span>
           </h2>
           <div className="space-y-3">
-            {citasFuturas.map((cita) => (
-              <div
-                key={cita.id}
-                className={`p-4 border-l-4 rounded-lg ${
-                  cita.estado === "CONFIRMADA"
-                    ? "border-green-500 bg-green-50"
-                    : "border-yellow-500 bg-yellow-50"
-                }`}
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-gray-900">{cita.nombreCliente}</h3>
-                    <p className="text-sm text-gray-600">📞 {cita.telefono}</p>
-                    <p className="text-sm text-gray-600">
-                      🕒 {formatearFecha(cita.inicio)} - {formatearHora(cita.fin)}
-                    </p>
-                    {cita.notas && (
-                      <p className="text-sm text-gray-500 mt-1 italic">{cita.notas}</p>
-                    )}
-                    {cita.googleCalendarLink && (
-                      <a
-                        href={cita.googleCalendarLink}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-xs text-blue-600 hover:text-blue-800 mt-1 inline-flex items-center gap-1"
+            {citasFuturas.map((cita) => {
+              const estadoColor = obtenerColorEstado(cita.estado);
+              return (
+                <div
+                  key={cita.id}
+                  className="p-4 rounded-lg"
+                  style={{
+                    border: `1px solid ${cita.estado === "CONFIRMADA" ? "#22B26B" : "#FB923C"}`,
+                    background: estadoColor.bg,
+                  }}
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-sm font-sora" style={{ color: "#0E2436" }}>
+                        {cita.nombreCliente}
+                      </h3>
+                      <p className="text-xs mt-1" style={{ color: "#73869A" }}>
+                        📞 {cita.telefono}
+                      </p>
+                      <p className="text-xs mt-1" style={{ color: "#41566B" }}>
+                        🕒 {formatearFecha(cita.inicio)} - {formatearHora(cita.fin)}
+                      </p>
+                      {cita.notas && (
+                        <p className="text-xs mt-2 italic" style={{ color: "#73869A" }}>
+                          {cita.notas}
+                        </p>
+                      )}
+                      {cita.googleCalendarLink && (
+                        <a
+                          href={cita.googleCalendarLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs mt-2 inline-flex items-center gap-1 hover:underline"
+                          style={{ color: "#2B82F0" }}
+                        >
+                          📅 Ver en Google Calendar
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                          </svg>
+                        </a>
+                      )}
+                    </div>
+                    <div className="flex flex-col gap-2 flex-shrink-0">
+                      <span
+                        className="px-3 py-1 rounded-lg text-xs font-medium"
+                        style={{ background: estadoColor.bg, color: estadoColor.color, border: `1px solid ${estadoColor.color}` }}
                       >
-                        📅 Ver en Google Calendar
-                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                        </svg>
-                      </a>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span
-                      className={`px-3 py-1 rounded-full text-xs font-medium border ${obtenerColorEstado(
-                        cita.estado
-                      )}`}
-                    >
-                      {cita.estado}
-                    </span>
-                    <form action={cambiarEstadoCita} className="inline">
-                      <input type="hidden" name="id" value={cita.id} />
-                      <input type="hidden" name="empresaId" value={id} />
+                        {cita.estado}
+                      </span>
                       {cita.estado === "PENDIENTE" && (
-                        <button
+                        <form action={cambiarEstadoCita}>
+                          <input type="hidden" name="id" value={cita.id} />
+                          <input type="hidden" name="empresaId" value={id} />
+                          <LoadingButton
+                            type="submit"
+                            name="estado"
+                            value="CONFIRMADA"
+                            className="px-3 py-1 text-white text-xs rounded-lg transition font-medium"
+                            style={{ background: "#22B26B" }}
+                          >
+                            Confirmar
+                          </LoadingButton>
+                        </form>
+                      )}
+                      <form action={cambiarEstadoCita}>
+                        <input type="hidden" name="id" value={cita.id} />
+                        <input type="hidden" name="empresaId" value={id} />
+                        <LoadingButton
                           type="submit"
                           name="estado"
-                          value="CONFIRMADA"
-                          className="px-3 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700 transition"
+                          value="CANCELADA"
+                          className="px-3 py-1 text-white text-xs rounded-lg transition font-medium"
+                          style={{ background: "#EF4444" }}
                         >
-                          Confirmar
-                        </button>
-                      )}
-                    </form>
-                    <form action={cambiarEstadoCita} className="inline">
-                      <input type="hidden" name="id" value={cita.id} />
-                      <input type="hidden" name="empresaId" value={id} />
-                      <button
-                        type="submit"
-                        name="estado"
-                        value="CANCELADA"
-                        className="px-3 py-1 bg-red-600 text-white text-xs rounded hover:bg-red-700 transition"
-                      >
-                        Cancelar
-                      </button>
-                    </form>
+                          Cancelar
+                        </LoadingButton>
+                      </form>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
 
       {/* Historial de citas pasadas */}
       {citasPasadas.length > 0 && (
-        <div className="bg-white p-6 rounded-lg shadow">
-          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-            📜 Historial ({citasPasadas.length})
+        <div className="bg-white rounded-xl p-6 mb-6" style={{ border: "1px solid #E2E9F0" }}>
+          <h2 className="text-lg font-semibold font-sora mb-4 flex items-center gap-2" style={{ color: "#0E2436" }}>
+            📜 Historial
+            <span className="text-xs px-2 py-0.5 rounded-full font-medium" style={{ background: "#F4F7FA", color: "#73869A" }}>
+              {citasPasadas.length}
+            </span>
           </h2>
           <div className="space-y-2">
-            {citasPasadas.slice(0, 10).map((cita) => (
-              <div
-                key={cita.id}
-                className="p-3 bg-gray-50 rounded border border-gray-200 flex items-start justify-between"
-              >
-                <div className="flex-1">
-                  <h3 className="font-medium text-gray-800">{cita.nombreCliente}</h3>
-                  <p className="text-sm text-gray-600">
-                    {formatearFecha(cita.inicio)} • {cita.telefono}
-                  </p>
-                  {cita.notas && (
-                    <p className="text-xs text-gray-500 mt-1">{cita.notas}</p>
-                  )}
-                </div>
-                <span
-                  className={`px-2 py-1 rounded text-xs font-medium ${obtenerColorEstado(
-                    cita.estado
-                  )}`}
+            {citasPasadas.slice(0, 10).map((cita) => {
+              const estadoColor = obtenerColorEstado(cita.estado);
+              return (
+                <div
+                  key={cita.id}
+                  className="p-3 rounded-lg flex items-start justify-between"
+                  style={{ background: "#F4F7FA", border: "1px solid #E2E9F0" }}
                 >
-                  {cita.estado}
-                </span>
-              </div>
-            ))}
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-medium text-sm" style={{ color: "#0E2436" }}>
+                      {cita.nombreCliente}
+                    </h3>
+                    <p className="text-xs mt-0.5" style={{ color: "#73869A" }}>
+                      {formatearFecha(cita.inicio)} • {cita.telefono}
+                    </p>
+                    {cita.notas && (
+                      <p className="text-xs mt-1" style={{ color: "#73869A" }}>
+                        {cita.notas}
+                      </p>
+                    )}
+                  </div>
+                  <span
+                    className="px-2 py-1 rounded text-xs font-medium flex-shrink-0"
+                    style={{ background: estadoColor.bg, color: estadoColor.color }}
+                  >
+                    {cita.estado}
+                  </span>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
 
       {/* Citas/Tareas canceladas */}
       {citasCanceladas.length > 0 && (
-        <details className="bg-white p-6 rounded-lg shadow">
-          <summary className="text-lg font-semibold cursor-pointer text-gray-700 hover:text-gray-900">
+        <details className="bg-white rounded-xl p-6 mb-6" style={{ border: "1px solid #E2E9F0" }}>
+          <summary className="text-sm font-semibold cursor-pointer font-sora hover:opacity-80" style={{ color: "#EF4444" }}>
             ❌ Citas/Tareas canceladas ({citasCanceladas.length})
           </summary>
           <div className="mt-4 space-y-2">
             {citasCanceladas.slice(0, 10).map((cita) => (
               <div
                 key={cita.id}
-                className="p-3 bg-red-50 rounded border border-red-200"
+                className="p-3 rounded-lg"
+                style={{ background: "rgba(239,68,68,0.05)", border: "1px solid rgba(239,68,68,0.2)" }}
               >
-                <h3 className="font-medium text-gray-800">{cita.nombreCliente}</h3>
-                <p className="text-sm text-gray-600">
+                <h3 className="font-medium text-sm" style={{ color: "#0E2436" }}>
+                  {cita.nombreCliente}
+                </h3>
+                <p className="text-xs mt-0.5" style={{ color: "#73869A" }}>
                   {formatearFecha(cita.inicio)} • {cita.telefono}
                 </p>
               </div>
@@ -380,13 +442,21 @@ export default async function AgendaPage({
       )}
 
       {citas.length === 0 && (
-        <div className="bg-white p-12 rounded-lg shadow text-center">
-          <p className="text-gray-500 text-lg">No hay citas/tareas agendadas aún</p>
-          <p className="text-sm text-gray-400 mt-2">
-            Crea tu primera cita/tarea usando el formulario de arriba
-          </p>
+        <div className="bg-white rounded-xl p-12" style={{ border: "1px solid #E2E9F0" }}>
+          <EmptyState
+            icon="📅"
+            title="Sin citas agendadas"
+            description="Las citas se crean cuando los clientes las solicitan por WhatsApp o puedes crearlas manualmente."
+            steps={[
+              "Cliente solicita una cita por WhatsApp",
+              "La IA la agenda automáticamente",
+              "Se sincroniza con Google Calendar",
+            ]}
+          />
         </div>
       )}
+
+      <ScrollToTop />
     </div>
   );
 }

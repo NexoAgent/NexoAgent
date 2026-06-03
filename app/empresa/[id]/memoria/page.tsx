@@ -2,6 +2,8 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { agregarMemoria, eliminarMemoria } from "@/app/actions/memoria";
+import LoadingButton from "@/app/components/ui/LoadingButton";
+import ScrollToTop from "@/app/components/ScrollToTop";
 
 const CATEGORIAS = [
   { key: "PRODUCTO",  label: "Productos y Servicios", color: "#2B82F0", bg: "rgba(43,130,240,0.06)",  placeholder: "Ej: Consulta básica",       placeholderValor: "Ej: $500 · incluye revisión y diagnóstico" },
@@ -102,18 +104,20 @@ export default async function MemoriaPage({
                   className="w-full rounded-lg px-3 py-2 text-xs focus:outline-none"
                   style={{ border: "1px solid #E2E9F0", color: "#0E2436" }}
                 />
-                <button
+                <LoadingButton
                   type="submit"
                   className="w-full text-xs font-medium py-2 rounded-lg transition-opacity hover:opacity-90"
                   style={{ background: cat.color, color: "white" }}
                 >
                   + Agregar
-                </button>
+                </LoadingButton>
               </form>
             </div>
           );
         })}
       </div>
+
+      <ScrollToTop />
     </div>
   );
 }

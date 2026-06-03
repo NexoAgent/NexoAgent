@@ -2,6 +2,9 @@ import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { reactivarIA } from "@/app/actions/conversaciones";
+import ChatMessages from "@/app/components/ChatMessages";
+import LoadingButton from "@/app/components/ui/LoadingButton";
+import Breadcrumbs from "@/app/components/Breadcrumbs";
 
 export default async function ConversacionDetallePage({
   params,
@@ -21,34 +24,40 @@ export default async function ConversacionDetallePage({
   if (!conversacion) notFound();
 
   return (
-    <div className="max-w-2xl">
-      <div className="flex items-center gap-3 mb-6">
-        <Link
-          href="/dashboard/conversaciones"
-          className="text-sm text-gray-400 hover:text-gray-600"
-        >
-          ← Volver
-        </Link>
+    <div className="max-w-4xl mx-auto">
+      <Breadcrumbs
+        items={[
+          { label: "Dashboard", href: "/dashboard" },
+          { label: "Conversaciones", href: "/dashboard/conversaciones" },
+          { label: conversacion.numeroCliente },
+        ]}
+      />
+
+      <div className="mb-6 flex flex-col sm:flex-row sm:items-center gap-4 justify-between">
         <div>
-          <h1 className="text-xl font-bold text-gray-900">
+          <h1 className="text-2xl font-bold font-sora" style={{ color: "#0E2436" }}>
             {conversacion.numeroCliente}
           </h1>
-          <p className="text-xs text-gray-400">{conversacion.empresa.nombre}</p>
+          <p className="text-sm mt-1" style={{ color: "#73869A" }}>
+            {conversacion.empresa.nombre} · {conversacion.mensajes.length} mensajes
+          </p>
         </div>
-        <div className="ml-auto flex items-center gap-2">
+
+        <div className="flex items-center gap-2 flex-wrap">
           {conversacion.modoHumano && (
             <form action={reactivarIA}>
               <input type="hidden" name="id" value={conversacion.id} />
-              <button
+              <LoadingButton
                 type="submit"
-                className="text-xs bg-orange-100 hover:bg-orange-200 text-orange-700 font-medium px-3 py-1 rounded-full transition-colors"
+                className="text-xs font-medium px-4 py-2 rounded-lg transition-colors"
+                style={{ background: "rgba(251,146,60,0.1)", color: "#FB923C" }}
               >
-                ⚠️ Atención humana — Reactivar IA
-              </button>
+                ⚠️ Reactivar IA
+              </LoadingButton>
             </form>
           )}
           <span
-            className={`text-xs px-2 py-1 rounded-full font-medium ${
+            className={`text-xs px-3 py-1.5 rounded-lg font-medium ${
               conversacion.estado === "ACTIVA"
                 ? "bg-green-100 text-green-700"
                 : "bg-gray-100 text-gray-500"
@@ -59,39 +68,21 @@ export default async function ConversacionDetallePage({
         </div>
       </div>
 
-      <div className="bg-white rounded-xl border border-gray-200 p-4 space-y-3 min-h-64">
-        {conversacion.mensajes.length === 0 ? (
-          <p className="text-sm text-gray-400 text-center py-10">
-            Sin mensajes en esta conversación
-          </p>
-        ) : (
-          conversacion.mensajes.map((m) => (
-            <div
-              key={m.id}
-              className={`flex ${m.rol === "CLIENTE" ? "justify-start" : "justify-end"}`}
-            >
-              <div
-                className={`max-w-xs px-4 py-2 rounded-2xl text-sm ${
-                  m.rol === "CLIENTE"
-                    ? "bg-gray-100 text-gray-800 rounded-tl-sm"
-                    : "bg-blue-600 text-white rounded-tr-sm"
-                }`}
-              >
-                <p>{m.contenido}</p>
-                <p
-                  className={`text-xs mt-1 ${
-                    m.rol === "CLIENTE" ? "text-gray-400" : "text-blue-200"
-                  }`}
-                >
-                  {m.creadoEn.toLocaleTimeString("es-MX", {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                </p>
-              </div>
-            </div>
-          ))
-        )}
+      <div
+        className="bg-white rounded-xl p-6 space-y-4 min-h-96 max-h-[600px] overflow-y-auto"
+        style={{ border: "1px solid #E2E9F0" }}
+      >
+        <ChatMessages mensajes={conversacion.mensajes} autoRefresh={true} />
+      </div>
+
+      <div className="mt-4 text-center">
+        <Link
+          href="/dashboard/conversaciones"
+          className="text-sm font-medium transition-colors hover:underline"
+          style={{ color: "#2B82F0" }}
+        >
+          ← Volver a conversaciones
+        </Link>
       </div>
     </div>
   );

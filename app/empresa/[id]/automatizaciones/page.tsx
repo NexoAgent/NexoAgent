@@ -6,6 +6,8 @@ import {
   toggleAutomatizacion,
   eliminarAutomatizacion,
 } from "@/app/actions/automatizaciones";
+import LoadingButton from "@/app/components/ui/LoadingButton";
+import ScrollToTop from "@/app/components/ScrollToTop";
 
 const TRIGGERS = [
   {
@@ -135,6 +137,8 @@ export default async function AutomatizacionesPage({
           <NuevaAutomatizacionForm empresaId={id} />
         </div>
       </div>
+
+      <ScrollToTop />
     </div>
   );
 }
@@ -178,10 +182,12 @@ function NuevaAutomatizacionForm({ empresaId }: { empresaId: string }) {
           style={{ border: "1px solid #E2E9F0", color: "#0E2436" }} />
       </div>
 
-      <button type="submit"
-        className="w-full text-white text-sm font-medium py-2.5 rounded-lg transition-opacity hover:opacity-90 grad-bg">
+      <LoadingButton
+        type="submit"
+        className="w-full text-white text-sm font-medium py-2.5 rounded-lg transition-opacity hover:opacity-90 grad-bg"
+      >
         Crear automatización
-      </button>
+      </LoadingButton>
     </form>
   );
 }

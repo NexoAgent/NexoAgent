@@ -31,9 +31,13 @@ export default async function EmpresaConversacionesPage({ params }: { params: Pr
       {/* Breadcrumbs */}
       <Breadcrumbs empresaId={id} empresaNombre={empresa?.nombre} />
 
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Conversaciones</h1>
-        <p className="text-gray-500 text-sm mt-1">{conversaciones.length} chats en total</p>
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold font-sora" style={{ color: "#0E2436" }}>
+          Conversaciones
+        </h1>
+        <p className="text-sm mt-1" style={{ color: "#73869A" }}>
+          {conversaciones.length} chat{conversaciones.length !== 1 ? "s" : ""} · Mensajes de WhatsApp
+        </p>
       </div>
 
       {conversaciones.length === 0 ? (
@@ -48,14 +52,14 @@ export default async function EmpresaConversacionesPage({ params }: { params: Pr
           ]}
         />
       ) : (
-        <div className="space-y-6">
+        <div className="space-y-5">
           {pendientes.length > 0 && (
             <div>
-              <p className="text-xs font-semibold text-amber-600 uppercase tracking-wider mb-3 flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-amber-400 inline-block"></span>
+              <p className="text-xs font-semibold uppercase tracking-wider mb-3 flex items-center gap-2" style={{ color: "#FB923C" }}>
+                <span className="w-2 h-2 rounded-full inline-block" style={{ background: "#FB923C" }}></span>
                 Requieren atención humana ({pendientes.length})
               </p>
-              <div className="bg-white rounded-xl border border-amber-200 shadow-sm divide-y divide-gray-50">
+              <div className="bg-white rounded-xl shadow-sm divide-y" style={{ border: "1px solid rgba(251,146,60,0.3)", borderColor: "#FCD9BD" }}>
                 {pendientes.map((c) => <ConversacionItem key={c.id} c={c} empresaId={id} />)}
               </div>
             </div>
@@ -63,11 +67,11 @@ export default async function EmpresaConversacionesPage({ params }: { params: Pr
 
           {normales.length > 0 && (
             <div>
-              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 inline-block"></span>
+              <p className="text-xs font-semibold uppercase tracking-wider mb-3 flex items-center gap-2" style={{ color: "#73869A" }}>
+                <span className="w-2 h-2 rounded-full inline-block" style={{ background: "#22B26B" }}></span>
                 Activas con IA ({normales.length})
               </p>
-              <div className="bg-white rounded-xl border border-gray-200 shadow-sm divide-y divide-gray-50">
+              <div className="bg-white rounded-xl shadow-sm divide-y" style={{ border: "1px solid #E2E9F0", borderColor: "#E2E9F0" }}>
                 {normales.map((c) => <ConversacionItem key={c.id} c={c} empresaId={id} />)}
               </div>
             </div>
@@ -93,22 +97,40 @@ interface ConversacionItemProps {
 function ConversacionItem({ c, empresaId }: { c: ConversacionItemProps; empresaId: string }) {
   return (
     <Link href={`/empresa/${empresaId}/conversaciones/${c.id}`} className="flex items-center gap-4 px-5 py-4 hover:bg-gray-50 transition-colors">
-      <div className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
-        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+      <div
+        className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 font-semibold text-sm font-sora"
+        style={{ background: "rgba(34,178,107,0.08)", color: "#22B26B" }}
+      >
+        {c.numeroCliente[0]}
       </div>
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-0.5">
-          <p className="text-sm font-medium text-gray-900">{c.numeroCliente}</p>
-          {c.modoHumano && <span className="text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full font-medium">Atención humana</span>}
+        <div className="flex items-center gap-2 mb-1">
+          <p className="text-sm font-medium font-sora" style={{ color: "#0E2436" }}>
+            {c.numeroCliente}
+          </p>
+          {c.modoHumano && (
+            <span
+              className="text-xs px-2 py-0.5 rounded-full font-medium"
+              style={{ background: "rgba(251,146,60,0.08)", color: "#FB923C" }}
+            >
+              Atención humana
+            </span>
+          )}
         </div>
-        <p className="text-xs text-gray-400 truncate">{c.mensajes[0]?.contenido ?? "Sin mensajes"}</p>
+        <p className="text-xs truncate" style={{ color: "#73869A" }}>
+          {c.mensajes[0]?.contenido ?? "Sin mensajes"}
+        </p>
       </div>
       <div className="flex items-center gap-3 flex-shrink-0">
-        <span className="text-xs text-gray-400">{c._count.mensajes} msg</span>
-        <span className="text-xs text-gray-400">
+        <span className="text-xs" style={{ color: "#73869A" }}>
+          {c._count.mensajes} msg
+        </span>
+        <span className="text-xs" style={{ color: "#73869A" }}>
           {formatTimeAgo(c.actualizadoEn)}
         </span>
-        <svg className="w-4 h-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+        <svg className="w-4 h-4" style={{ color: "#E2E9F0" }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+        </svg>
       </div>
     </Link>
   );
