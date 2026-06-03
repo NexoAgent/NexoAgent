@@ -5,12 +5,14 @@
 NexoAgent es un sistema completo de asistentes virtuales potenciados por IA (Claude de Anthropic) que permite a las empresas automatizar y mejorar sus conversaciones con clientes a través de WhatsApp. Incluye gestión de conocimiento, CRM integrado, automatizaciones, analíticas y **creación automática de citas/tareas desde WhatsApp con sincronización a Google Calendar**.
 
 > 📚 **Guías rápidas**: 
-> - [⚡ Setup Supabase (5 min)](QUICKSTART-SUPABASE.md) ← **NUEVO**
+> - [⚡ Migración a Vercel (<1h)](QUICKSTART_MIGRACION.md) ← **NUEVO**
+> - [📦 Guía de Deployment](DEPLOYMENT.md)
+> - [🔄 Migración Render → Vercel](MIGRACION_VERCEL.md) ← **NUEVO**
+> - [⚡ Setup Supabase (5 min)](QUICKSTART-SUPABASE.md)
 > - [🚀 Deploy en Render](QUICKSTART-RENDER.md)
-> - [📦 Deployment completo](DEPLOYMENT.md)
-> - [🔒 Seguridad y Validaciones](VALIDATION-SECURITY.md) ← **NUEVO**
-> - [🎨 Guía de Marca](BRAND-GUIDE.md) ← **NUEVO**
-> - [✅ Checklist Producción](PRODUCTION-READY-CHECKLIST.md) ← **NUEVO**
+> - [🔒 Seguridad y Validaciones](VALIDATION-SECURITY.md)
+> - [🎨 Guía de Marca](BRAND-GUIDE.md)
+> - [✅ Checklist Producción](PRODUCTION-READY-CHECKLIST.md)
 > - [🤖 Agente Automático](AGENTE-AUTOMATICO.md)
 > - [📅 Setup Google Calendar](GOOGLE-CALENDAR-SETUP.md)
 > - [⏰ Validación de Horarios](VALIDACION-HORARIOS.md)
@@ -198,10 +200,26 @@ Asegúrate de configurar:
 - `NEXT_PUBLIC_APP_URL`: URL pública de tu app
 
 ### Plataformas recomendadas
-- **Vercel** (recomendado para Next.js)
+- **Vercel** (recomendado para Next.js) ← **🌟 Migración automatizada disponible**
 - **Railway**
 - **Render**
 - **DigitalOcean App Platform**
+
+### 🚀 Migración automatizada a Vercel
+
+¿Ya tienes tu proyecto en Render u otro hosting? Usa nuestros scripts de migración:
+
+```bash
+# Verificar que estás listo
+./scripts/pre-migration-check.sh
+
+# Migrar a Vercel (guía interactiva)
+./scripts/migrate.sh
+```
+
+**Tiempo estimado:** 45-60 minutos
+
+Ver [Guía de Migración Completa](MIGRACION_VERCEL.md) o [Quick Start](QUICKSTART_MIGRACION.md)
 
 ### Configurar webhook de WhatsApp
 1. En Meta Developer Console, configura el webhook URL:
