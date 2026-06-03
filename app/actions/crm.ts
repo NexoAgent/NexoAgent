@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { isRedirectError } from "next/dist/client/components/redirect-error";
 import {
   crearContactoSchema,
   actualizarContactoSchema,
@@ -37,6 +38,7 @@ export async function actualizarContacto(formData: FormData) {
     revalidatePath(`/empresa/${empresaId}/crm`);
     redirect(`/empresa/${empresaId}/crm/${validated.id}?guardado=1`);
   } catch (error) {
+    if (isRedirectError(error)) throw error;
     if (error instanceof z.ZodError) {
       console.error("Validación fallida:", error.issues);
       throw new Error(error.issues[0]?.message || "Datos inválidos");
@@ -84,6 +86,7 @@ export async function crearContacto(formData: FormData) {
 
     revalidatePath(`/empresa/${validated.empresaId}/crm`);
   } catch (error) {
+    if (isRedirectError(error)) throw error;
     if (error instanceof z.ZodError) {
       console.error("Validación fallida:", error.issues);
       throw new Error(error.issues[0]?.message || "Datos inválidos");
@@ -117,6 +120,7 @@ export async function eliminarContacto(formData: FormData) {
     revalidatePath(`/empresa/${empresaId}/crm`);
     redirect(`/empresa/${empresaId}/crm`);
   } catch (error) {
+    if (isRedirectError(error)) throw error;
     console.error("Error al eliminar contacto:", error);
     throw new Error("Error al eliminar contacto");
   }

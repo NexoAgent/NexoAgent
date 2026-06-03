@@ -95,6 +95,7 @@ export async function crearEmpresaConUsuario(formData: FormData) {
     console.log("[crearEmpresaConUsuario] Empresa creada exitosamente:", empresa.id);
     redirect(`/admin?creada=true`);
   } catch (error) {
+    if (isRedirectError(error)) throw error;
     // Si es un error de redirección, dejarlo pasar (es el comportamiento normal)
     if (isRedirectError(error)) {
       throw error;

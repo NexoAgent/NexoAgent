@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { setCredentials, createEvent, updateEvent, deleteEvent } from "@/lib/google-calendar";
 import {
   crearCitaSchema,
@@ -63,6 +64,7 @@ export async function crearCita(formData: FormData) {
         googleEventId = event.id;
         googleCalendarLink = event.link;
       } catch (error) {
+    if (isRedirectError(error)) throw error;
         console.error("Error creando evento en Google Calendar:", error);
       }
     }
@@ -83,6 +85,7 @@ export async function crearCita(formData: FormData) {
 
     revalidatePath(`/empresa/${validated.empresaId}/agenda`);
   } catch (error) {
+    if (isRedirectError(error)) throw error;
     if (error instanceof z.ZodError) {
       console.error("Validación fallida:", error.issues);
       throw new Error(error.issues[0]?.message || "Datos inválidos");
@@ -129,6 +132,7 @@ export async function cambiarEstadoCita(formData: FormData) {
           status: validated.estado === "CANCELADA" ? "cancelled" : "confirmed",
         });
       } catch (error) {
+    if (isRedirectError(error)) throw error;
         console.error("Error actualizando evento en Google Calendar:", error);
       }
     }
@@ -143,6 +147,7 @@ export async function cambiarEstadoCita(formData: FormData) {
 
     revalidatePath(`/empresa/${empresaId}/agenda`);
   } catch (error) {
+    if (isRedirectError(error)) throw error;
     if (error instanceof z.ZodError) {
       console.error("Validación fallida:", error.issues);
       throw new Error(error.issues[0]?.message || "Datos inválidos");
@@ -181,6 +186,7 @@ export async function eliminarCita(formData: FormData) {
         const auth = setCredentials(cita.empresa.googleAccessToken, cita.empresa.googleRefreshToken || undefined);
         await deleteEvent(auth, cita.empresa.googleCalendarId, cita.googleEventId);
       } catch (error) {
+    if (isRedirectError(error)) throw error;
         console.error("Error eliminando evento en Google Calendar:", error);
       }
     }
@@ -188,6 +194,7 @@ export async function eliminarCita(formData: FormData) {
     await prisma.cita.delete({ where: { id } });
     revalidatePath(`/empresa/${empresaId}/agenda`);
   } catch (error) {
+    if (isRedirectError(error)) throw error;
     console.error("Error al eliminar cita:", error);
     throw error;
   }
@@ -214,6 +221,7 @@ export async function desconectarGoogleCalendar(formData: FormData) {
     revalidatePath(`/empresa/${empresaId}/agenda`);
     redirect(`/empresa/${empresaId}/agenda?google_disconnected=1`);
   } catch (error) {
+    if (isRedirectError(error)) throw error;
     console.error("Error al desconectar Google Calendar:", error);
     throw new Error("Error al desconectar Google Calendar");
   }
@@ -243,6 +251,7 @@ export async function guardarCalendly(formData: FormData) {
 
     revalidatePath(`/empresa/${empresaId}/agenda`);
   } catch (error) {
+    if (isRedirectError(error)) throw error;
     console.error("Error al guardar URL de Calendly:", error);
     throw error;
   }
