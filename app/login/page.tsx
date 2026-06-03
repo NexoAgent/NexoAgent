@@ -1,8 +1,12 @@
 import { login, loginWithGoogle } from "@/app/actions/auth";
 import Image from "next/image";
+import Link from "next/link";
 
-export default function LoginPage() {
-
+export default function LoginPage({
+  searchParams,
+}: {
+  searchParams: { success?: string };
+}) {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-cyan-50 to-emerald-50 relative overflow-hidden">
       {/* Decorative elements */}
@@ -26,6 +30,14 @@ export default function LoginPage() {
           <p className="text-gray-600 text-sm">Inicia sesión para continuar</p>
         </div>
 
+        {searchParams.success && (
+          <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+            <p className="text-green-800 text-sm text-center">
+              {searchParams.success}
+            </p>
+          </div>
+        )}
+
         <form action={login} className="space-y-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -41,9 +53,17 @@ export default function LoginPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Contraseña
-            </label>
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Contraseña
+              </label>
+              <Link
+                href="/forgot-password"
+                className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+              >
+                ¿Olvidaste tu contraseña?
+              </Link>
+            </div>
             <input
               type="password"
               name="password"
