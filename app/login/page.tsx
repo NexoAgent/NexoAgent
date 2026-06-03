@@ -15,16 +15,16 @@ export default function LoginPage({
         <div className="absolute bottom-20 right-20 w-96 h-96 bg-emerald-400/10 rounded-full blur-3xl animate-float" style={{ animationDelay: '1s' }}></div>
       </div>
 
-      <div className="bg-white p-10 rounded-2xl shadow-2xl w-full max-w-md border border-gray-100 relative z-10 animate-fade-in-up">
-        <div className="text-center mb-8">
-          <div className="flex justify-center mb-6">
+      <div className="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md border border-gray-100 relative z-10 animate-fade-in-up">
+        <div className="text-center mb-6">
+          <div className="flex justify-center mb-4">
             <Image
               src="/logo.png"
               alt="NexoAgent"
               width={576}
               height={180}
               priority
-              className="w-auto h-36"
+              className="w-auto h-28"
             />
           </div>
           <p className="text-gray-600 text-sm">Inicia sesión para continuar</p>
@@ -38,7 +38,7 @@ export default function LoginPage({
           </div>
         )}
 
-        <form action={login} className="space-y-6">
+        <form action={login} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Email
@@ -82,7 +82,7 @@ export default function LoginPage({
         </form>
 
         {/* Divider */}
-        <div className="relative my-6">
+        <div className="relative my-4">
           <div className="absolute inset-0 flex items-center">
             <div className="w-full border-t border-gray-200"></div>
           </div>
@@ -107,11 +107,11 @@ export default function LoginPage({
           </button>
         </form>
 
-        <p className="text-center text-sm text-gray-600 mt-6">
+        <p className="text-center text-sm text-gray-600 mt-4">
           ¿Problemas para acceder? Contacta al administrador
         </p>
 
-        <div className="mt-8 pt-6 border-t border-gray-100">
+        <div className="mt-6 pt-4 border-t border-gray-100">
           <div className="flex items-center justify-center gap-4 text-xs text-gray-500">
             <div className="flex items-center gap-1">
               <svg className="w-3 h-3 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
