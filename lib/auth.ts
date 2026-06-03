@@ -80,25 +80,21 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       }
       return true;
     },
-    async jwt({ token, user }) {
-      if (user) {
-        // En el primer login, obtener los datos del usuario
+    async session({ session, user }) {
+      // Con database strategy, NextAuth pasa el user desde la DB
+      if (session.user && user) {
         const dbUser = await prisma.usuario.findUnique({
           where: { id: user.id },
         });
 
         if (dbUser) {
-          token.rol = dbUser.rol;
-          token.empresaId = dbUser.empresaId;
+          session.user.id = dbUser.id;
+          session.user.rol = dbUser.rol;
+          session.user.empresaId = dbUser.empresaId;
+          session.user.name = dbUser.nombre;
+          session.user.email = dbUser.email;
+          session.user.image = dbUser.image;
         }
-      }
-      return token;
-    },
-    async session({ session, token }) {
-      if (session.user) {
-        session.user.id = token.sub!;
-        session.user.rol = token.rol as "PROVEEDOR" | "CLIENTE";
-        session.user.empresaId = token.empresaId as string | null;
       }
       return session;
     },
