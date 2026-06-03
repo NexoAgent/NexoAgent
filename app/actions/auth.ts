@@ -16,3 +16,9 @@ export async function login(formData: FormData) {
 export async function logout() {
   await signOut({ redirectTo: "/login" });
 }
+
+export async function loginWithGoogle() {
+  await signIn("google", {
+    redirectTo: "/dashboard",
+  });
+}
