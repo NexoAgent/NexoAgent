@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { crearUsuarioProveedor, cambiarContrasena, eliminarUsuario } from "@/app/actions/usuarios";
+import DeleteUserButton from "./DeleteUserButton";
 
 export default async function UsuariosPage({
   searchParams,
@@ -191,19 +192,11 @@ export default async function UsuariosPage({
                 </div>
                 <div className="flex gap-2">
                   {usuario.id !== session.user.id && (
-                    <form action={eliminarUsuario.bind(null, usuario.id)}>
-                      <button
-                        type="submit"
-                        className="text-sm text-red-600 hover:text-red-700"
-                        onClick={(e) => {
-                          if (!confirm(`¿Eliminar a ${usuario.nombre}?`)) {
-                            e.preventDefault();
-                          }
-                        }}
-                      >
-                        Eliminar
-                      </button>
-                    </form>
+                    <DeleteUserButton
+                      userId={usuario.id}
+                      userName={usuario.nombre}
+                      eliminarUsuario={eliminarUsuario}
+                    />
                   )}
                 </div>
               </div>
