@@ -4,6 +4,12 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import {
+  enviarEmailNuevoTicket,
+  enviarEmailRespuestaTicket,
+  enviarEmailCambioEstado,
+  enviarEmailAsignacionTicket,
+} from "@/lib/email";
 
 /**
  * Crear un nuevo ticket
@@ -43,6 +49,25 @@ export async function crearTicket(formData: FormData) {
     },
   });
 
+  // Enviar emails a usuarios PROVEEDOR
+  const proveedores = await prisma.usuario.findMany({
+    where: { rol: "PROVEEDOR" },
+    select: { email: true, nombre: true },
+  });
+
+  for (const proveedor of proveedores) {
+    enviarEmailNuevoTicket({
+      ticketId: ticket.id,
+      titulo,
+      descripcion,
+      prioridad,
+      categoria,
+      creadoPor: session.user.name || session.user.email || "Usuario",
+      destinatarioEmail: proveedor.email,
+      destinatarioNombre: proveedor.nombre,
+    }).catch((err) => console.error("Error enviando email:", err));
+  }
+
   revalidatePath("/dashboard/tickets");
   redirect(`/dashboard/tickets/${ticket.id}`);
 }
@@ -67,6 +92,10 @@ export async function agregarMensajeTicket(formData: FormData) {
   // Verificar que el usuario tenga acceso al ticket
   const ticket = await prisma.ticket.findUnique({
     where: { id: ticketId },
+    include: {
+      creadoPor: { select: { email: true, nombre: true, id: true } },
+      asignadoA: { select: { email: true, nombre: true, id: true } },
+    },
   });
 
   if (!ticket) {
@@ -91,6 +120,41 @@ export async function agregarMensajeTicket(formData: FormData) {
     data: { actualizadoEn: new Date() },
   });
 
+  // Enviar email a los participantes (excepto quien respondió)
+  const destinatarios = [];
+
+  // Si es mensaje interno, solo notificar a proveedores
+  if (esInternoFinal) {
+    const proveedores = await prisma.usuario.findMany({
+      where: {
+        rol: "PROVEEDOR",
+        id: { not: session.user.id },
+      },
+      select: { email: true, nombre: true },
+    });
+    destinatarios.push(...proveedores);
+  } else {
+    // Mensaje público: notificar al creador y asignado (si no son quien respondió)
+    if (ticket.creadoPor.id !== session.user.id) {
+      destinatarios.push(ticket.creadoPor);
+    }
+    if (ticket.asignadoA && ticket.asignadoA.id !== session.user.id) {
+      destinatarios.push(ticket.asignadoA);
+    }
+  }
+
+  for (const destinatario of destinatarios) {
+    enviarEmailRespuestaTicket({
+      ticketId,
+      titulo: ticket.titulo,
+      mensaje,
+      respuestaDe: session.user.name || session.user.email || "Usuario",
+      destinatarioEmail: destinatario.email,
+      destinatarioNombre: destinatario.nombre,
+      esInterno: esInternoFinal,
+    }).catch((err) => console.error("Error enviando email:", err));
+  }
+
   revalidatePath(`/dashboard/tickets/${ticketId}`);
 }
 
@@ -110,6 +174,20 @@ export async function actualizarEstadoTicket(formData: FormData) {
     return;
   }
 
+  // Obtener estado anterior
+  const ticket = await prisma.ticket.findUnique({
+    where: { id: ticketId },
+    include: {
+      creadoPor: { select: { email: true, nombre: true } },
+    },
+  });
+
+  if (!ticket) {
+    return;
+  }
+
+  const estadoAnterior = ticket.estado;
+
   const updateData: any = {
     estado: estado as any,
     actualizadoEn: new Date(),
@@ -124,6 +202,19 @@ export async function actualizarEstadoTicket(formData: FormData) {
     where: { id: ticketId },
     data: updateData,
   });
+
+  // Notificar al creador del ticket si el estado cambió
+  if (estadoAnterior !== estado) {
+    enviarEmailCambioEstado({
+      ticketId,
+      titulo: ticket.titulo,
+      estadoAnterior,
+      estadoNuevo: estado,
+      cambiadoPor: session.user.name || session.user.email || "Usuario",
+      destinatarioEmail: ticket.creadoPor.email,
+      destinatarioNombre: ticket.creadoPor.nombre,
+    }).catch((err) => console.error("Error enviando email:", err));
+  }
 
   revalidatePath(`/dashboard/tickets/${ticketId}`);
   revalidatePath("/dashboard/tickets");
@@ -145,6 +236,17 @@ export async function asignarTicket(formData: FormData) {
     return;
   }
 
+  // Obtener info del ticket y nuevo asignado
+  const ticket = await prisma.ticket.findUnique({
+    where: { id: ticketId },
+  });
+
+  if (!ticket) {
+    return;
+  }
+
+  const asignadoAnteriorId = ticket.asignadoAId;
+
   await prisma.ticket.update({
     where: { id: ticketId },
     data: {
@@ -152,6 +254,26 @@ export async function asignarTicket(formData: FormData) {
       estado: asignadoAId ? "EN_PROGRESO" : "ABIERTO",
     },
   });
+
+  // Si se asignó a alguien nuevo, enviar email
+  if (asignadoAId && asignadoAId !== asignadoAnteriorId) {
+    const nuevoAsignado = await prisma.usuario.findUnique({
+      where: { id: asignadoAId },
+      select: { email: true, nombre: true },
+    });
+
+    if (nuevoAsignado) {
+      enviarEmailAsignacionTicket({
+        ticketId,
+        titulo: ticket.titulo,
+        descripcion: ticket.descripcion,
+        prioridad: ticket.prioridad,
+        asignadoPor: session.user.name || session.user.email || "Usuario",
+        destinatarioEmail: nuevoAsignado.email,
+        destinatarioNombre: nuevoAsignado.nombre,
+      }).catch((err) => console.error("Error enviando email:", err));
+    }
+  }
 
   revalidatePath(`/dashboard/tickets/${ticketId}`);
   revalidatePath("/dashboard/tickets");
