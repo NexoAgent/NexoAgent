@@ -1,12 +1,10 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
-import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
-  adapter: PrismaAdapter(prisma),
   secret: process.env.AUTH_SECRET,
   trustHost: true,
   providers: [
@@ -67,7 +65,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
         if (!existingUser) {
           // Crear usuario desde Google
-          await prisma.usuario.create({
+          const newUser = await prisma.usuario.create({
             data: {
               email: profile.email,
               nombre: profile.name || profile.email.split("@")[0],
@@ -76,25 +74,37 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
               rol: "CLIENTE",
             },
           });
+          // Asignar el ID al user para que esté disponible en jwt callback
+          user.id = newUser.id;
+        } else {
+          user.id = existingUser.id;
         }
       }
       return true;
     },
-    async session({ session, user }) {
-      // Con database strategy, NextAuth pasa el user desde la DB
-      if (session.user && user) {
+    async jwt({ token, user, account }) {
+      // En el primer login, agregar info del usuario al token
+      if (user) {
         const dbUser = await prisma.usuario.findUnique({
           where: { id: user.id },
         });
 
         if (dbUser) {
-          session.user.id = dbUser.id;
-          session.user.rol = dbUser.rol;
-          session.user.empresaId = dbUser.empresaId;
-          session.user.name = dbUser.nombre;
-          session.user.email = dbUser.email;
-          session.user.image = dbUser.image;
+          token.id = dbUser.id;
+          token.rol = dbUser.rol;
+          token.empresaId = dbUser.empresaId;
+          token.nombre = dbUser.nombre;
         }
+      }
+      return token;
+    },
+    async session({ session, token }) {
+      // Pasar info del token a la sesión
+      if (session.user) {
+        session.user.id = token.id as string;
+        session.user.rol = token.rol as "PROVEEDOR" | "CLIENTE";
+        session.user.empresaId = token.empresaId as string | null;
+        session.user.name = token.nombre as string;
       }
       return session;
     },
@@ -103,7 +113,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     signIn: "/login",
   },
   session: {
-    strategy: "database",
+    strategy: "jwt",
     maxAge: 30 * 24 * 60 * 60, // 30 días
   },
 });
