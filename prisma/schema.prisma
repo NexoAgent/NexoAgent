@@ -8,19 +8,22 @@ datasource db {
 }
 
 model Usuario {
-  id            String     @id @default(cuid())
-  email         String     @unique
-  password      String?    // Opcional para usuarios OAuth
-  nombre        String
-  rol           RolUsuario @default(CLIENTE)
-  empresaId     String?    @unique
-  image         String?    // Avatar de Google/OAuth
-  emailVerified DateTime?  // Para NextAuth
-  creadoEn      DateTime   @default(now())
-  actualizadoEn DateTime   @updatedAt
-  empresa       Empresa?   @relation("EmpresaUsuario", fields: [empresaId], references: [id])
-  accounts      Account[]  // Cuentas OAuth vinculadas
-  sessions      Session[]  // Sesiones de NextAuth
+  id                 String     @id @default(cuid())
+  email              String     @unique
+  password           String?    // Opcional para usuarios OAuth
+  nombre             String
+  rol                RolUsuario @default(CLIENTE)
+  empresaId          String?    @unique
+  image              String?    // Avatar de Google/OAuth
+  emailVerified      DateTime?  // Para NextAuth
+  creadoEn           DateTime   @default(now())
+  actualizadoEn      DateTime   @updatedAt
+  empresa            Empresa?   @relation("EmpresaUsuario", fields: [empresaId], references: [id])
+  accounts           Account[]  // Cuentas OAuth vinculadas
+  sessions           Session[]  // Sesiones de NextAuth
+  ticketsCreados     Ticket[]   @relation("TicketCreador")
+  ticketsAsignados   Ticket[]   @relation("TicketAsignado")
+  mensajesTicket     MensajeTicket[]
 }
 
 model Empresa {
@@ -258,4 +261,64 @@ model PasswordResetToken {
 
   @@index([email])
   @@index([token])
+}
+
+model Ticket {
+  id            String         @id @default(cuid())
+  titulo        String
+  descripcion   String
+  estado        EstadoTicket   @default(ABIERTO)
+  prioridad     PrioridadTicket @default(MEDIA)
+  categoria     CategoriaTicket @default(GENERAL)
+  creadoPorId   String
+  asignadoAId   String?
+  empresaId     String?
+  creadoEn      DateTime       @default(now())
+  actualizadoEn DateTime       @updatedAt
+  cerradoEn     DateTime?
+  creadoPor     Usuario        @relation("TicketCreador", fields: [creadoPorId], references: [id])
+  asignadoA     Usuario?       @relation("TicketAsignado", fields: [asignadoAId], references: [id])
+  mensajes      MensajeTicket[]
+
+  @@index([creadoPorId])
+  @@index([asignadoAId])
+  @@index([estado])
+  @@index([empresaId])
+}
+
+model MensajeTicket {
+  id          String   @id @default(cuid())
+  ticketId    String
+  usuarioId   String
+  mensaje     String
+  esInterno   Boolean  @default(false)
+  creadoEn    DateTime @default(now())
+  ticket      Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  usuario     Usuario  @relation(fields: [usuarioId], references: [id])
+
+  @@index([ticketId])
+  @@index([usuarioId])
+}
+
+enum EstadoTicket {
+  ABIERTO
+  EN_PROGRESO
+  RESUELTO
+  CERRADO
+}
+
+enum PrioridadTicket {
+  BAJA
+  MEDIA
+  ALTA
+  URGENTE
+}
+
+enum CategoriaTicket {
+  GENERAL
+  TECNICO
+  FACTURACION
+  FUNCIONALIDAD
+  BUG
+  MEJORA
 }

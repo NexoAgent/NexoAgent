@@ -1,0 +1,282 @@
+"use server";
+
+import { auth } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+
+/**
+ * Crear un nuevo ticket
+ */
+export async function crearTicket(formData: FormData) {
+  const session = await auth();
+  if (!session?.user) {
+    redirect("/login");
+  }
+
+  const titulo = formData.get("titulo") as string;
+  const descripcion = formData.get("descripcion") as string;
+  const prioridad = formData.get("prioridad") as string;
+  const categoria = formData.get("categoria") as string;
+
+  if (!titulo || !descripcion) {
+    redirect("/dashboard/tickets/nuevo?error=Datos+incompletos");
+  }
+
+  const ticket = await prisma.ticket.create({
+    data: {
+      titulo,
+      descripcion,
+      prioridad: prioridad as any,
+      categoria: categoria as any,
+      creadoPorId: session.user.id,
+      empresaId: session.user.empresaId,
+    },
+  });
+
+  // Crear mensaje inicial del ticket
+  await prisma.mensajeTicket.create({
+    data: {
+      ticketId: ticket.id,
+      usuarioId: session.user.id,
+      mensaje: descripcion,
+    },
+  });
+
+  revalidatePath("/dashboard/tickets");
+  redirect(`/dashboard/tickets/${ticket.id}`);
+}
+
+/**
+ * Agregar mensaje a un ticket
+ */
+export async function agregarMensajeTicket(formData: FormData) {
+  const session = await auth();
+  if (!session?.user) {
+    redirect("/login");
+  }
+
+  const ticketId = formData.get("ticketId") as string;
+  const mensaje = formData.get("mensaje") as string;
+  const esInterno = formData.get("esInterno") === "true";
+
+  if (!ticketId || !mensaje) {
+    return;
+  }
+
+  // Verificar que el usuario tenga acceso al ticket
+  const ticket = await prisma.ticket.findUnique({
+    where: { id: ticketId },
+  });
+
+  if (!ticket) {
+    redirect("/dashboard/tickets?error=Ticket+no+encontrado");
+  }
+
+  // Solo PROVEEDOR puede crear mensajes internos
+  const esInternoFinal = session.user.rol === "PROVEEDOR" ? esInterno : false;
+
+  await prisma.mensajeTicket.create({
+    data: {
+      ticketId,
+      usuarioId: session.user.id,
+      mensaje,
+      esInterno: esInternoFinal,
+    },
+  });
+
+  // Actualizar timestamp del ticket
+  await prisma.ticket.update({
+    where: { id: ticketId },
+    data: { actualizadoEn: new Date() },
+  });
+
+  revalidatePath(`/dashboard/tickets/${ticketId}`);
+}
+
+/**
+ * Actualizar estado de un ticket
+ */
+export async function actualizarEstadoTicket(formData: FormData) {
+  const session = await auth();
+  if (!session?.user) {
+    redirect("/login");
+  }
+
+  const ticketId = formData.get("ticketId") as string;
+  const estado = formData.get("estado") as string;
+
+  if (!ticketId || !estado) {
+    return;
+  }
+
+  const updateData: any = {
+    estado: estado as any,
+    actualizadoEn: new Date(),
+  };
+
+  // Si se está cerrando o resolviendo, guardar fecha
+  if (estado === "CERRADO" || estado === "RESUELTO") {
+    updateData.cerradoEn = new Date();
+  }
+
+  await prisma.ticket.update({
+    where: { id: ticketId },
+    data: updateData,
+  });
+
+  revalidatePath(`/dashboard/tickets/${ticketId}`);
+  revalidatePath("/dashboard/tickets");
+}
+
+/**
+ * Asignar ticket a un usuario (solo PROVEEDOR)
+ */
+export async function asignarTicket(formData: FormData) {
+  const session = await auth();
+  if (!session?.user || session.user.rol !== "PROVEEDOR") {
+    redirect("/login");
+  }
+
+  const ticketId = formData.get("ticketId") as string;
+  const asignadoAId = formData.get("asignadoAId") as string;
+
+  if (!ticketId) {
+    return;
+  }
+
+  await prisma.ticket.update({
+    where: { id: ticketId },
+    data: {
+      asignadoAId: asignadoAId || null,
+      estado: asignadoAId ? "EN_PROGRESO" : "ABIERTO",
+    },
+  });
+
+  revalidatePath(`/dashboard/tickets/${ticketId}`);
+  revalidatePath("/dashboard/tickets");
+}
+
+/**
+ * Obtener tickets del usuario actual
+ */
+export async function obtenerMisTickets() {
+  const session = await auth();
+  if (!session?.user) {
+    return [];
+  }
+
+  const where: any = {};
+
+  if (session.user.rol === "CLIENTE") {
+    // Clientes solo ven sus propios tickets
+    where.creadoPorId = session.user.id;
+  } else {
+    // Proveedores ven todos los tickets de su empresa o asignados a ellos
+    where.OR = [
+      { empresaId: session.user.empresaId },
+      { asignadoAId: session.user.id },
+    ];
+  }
+
+  const tickets = await prisma.ticket.findMany({
+    where,
+    include: {
+      creadoPor: {
+        select: {
+          id: true,
+          nombre: true,
+          email: true,
+          image: true,
+        },
+      },
+      asignadoA: {
+        select: {
+          id: true,
+          nombre: true,
+          email: true,
+          image: true,
+        },
+      },
+      _count: {
+        select: {
+          mensajes: true,
+        },
+      },
+    },
+    orderBy: {
+      actualizadoEn: "desc",
+    },
+  });
+
+  return tickets;
+}
+
+/**
+ * Obtener detalle de un ticket
+ */
+export async function obtenerTicket(ticketId: string) {
+  const session = await auth();
+  if (!session?.user) {
+    return null;
+  }
+
+  const ticket = await prisma.ticket.findUnique({
+    where: { id: ticketId },
+    include: {
+      creadoPor: {
+        select: {
+          id: true,
+          nombre: true,
+          email: true,
+          image: true,
+          rol: true,
+        },
+      },
+      asignadoA: {
+        select: {
+          id: true,
+          nombre: true,
+          email: true,
+          image: true,
+        },
+      },
+      mensajes: {
+        include: {
+          usuario: {
+            select: {
+              id: true,
+              nombre: true,
+              email: true,
+              image: true,
+              rol: true,
+            },
+          },
+        },
+        orderBy: {
+          creadoEn: "asc",
+        },
+      },
+    },
+  });
+
+  if (!ticket) {
+    return null;
+  }
+
+  // Verificar permisos
+  const esCreador = ticket.creadoPorId === session.user.id;
+  const esAsignado = ticket.asignadoAId === session.user.id;
+  const esProveedor = session.user.rol === "PROVEEDOR";
+
+  if (!esCreador && !esAsignado && !esProveedor) {
+    return null;
+  }
+
+  // Filtrar mensajes internos si es cliente
+  if (session.user.rol === "CLIENTE") {
+    ticket.mensajes = ticket.mensajes.filter((m) => !m.esInterno);
+  }
+
+  return ticket;
+}
