@@ -1,10 +1,9 @@
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { agregarMemoria } from "@/app/actions/memoria";
-import LoadingButton from "@/app/components/ui/LoadingButton";
 import ScrollToTop from "@/app/components/ScrollToTop";
 import DeleteMemoriaButton from "@/app/components/actions/DeleteMemoriaButton";
+import MemoriaForm from "@/app/components/forms/MemoriaForm";
 
 const CATEGORIAS = [
   { key: "PRODUCTO",  label: "Productos y Servicios", color: "#2B82F0", bg: "rgba(43,130,240,0.06)",  placeholder: "Ej: Consulta básica",       placeholderValor: "Ej: $500 · incluye revisión y diagnóstico" },
@@ -86,33 +85,13 @@ export default async function MemoriaPage({
               </div>
 
               {/* Formulario para agregar */}
-              <form action={agregarMemoria} className="p-4 space-y-2" style={{ borderTop: "1px solid #F4F7FA", background: "#FAFCFE" }}>
-                <input type="hidden" name="empresaId" value={id} />
-                <input type="hidden" name="categoria" value={cat.key} />
-                <input
-                  name="clave"
-                  type="text"
-                  required
-                  placeholder={cat.placeholder}
-                  className="w-full rounded-lg px-3 py-2 text-xs focus:outline-none"
-                  style={{ border: "1px solid #E2E9F0", color: "#0E2436" }}
-                />
-                <input
-                  name="valor"
-                  type="text"
-                  required
-                  placeholder={cat.placeholderValor}
-                  className="w-full rounded-lg px-3 py-2 text-xs focus:outline-none"
-                  style={{ border: "1px solid #E2E9F0", color: "#0E2436" }}
-                />
-                <LoadingButton
-                  type="submit"
-                  className="w-full text-xs font-medium py-2 rounded-lg transition-opacity hover:opacity-90"
-                  style={{ background: cat.color, color: "white" }}
-                >
-                  + Agregar
-                </LoadingButton>
-              </form>
+              <MemoriaForm
+                empresaId={id}
+                categoria={cat.key}
+                color={cat.color}
+                placeholder={cat.placeholder}
+                placeholderValor={cat.placeholderValor}
+              />
             </div>
           );
         })}

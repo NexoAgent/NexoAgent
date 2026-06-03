@@ -1,10 +1,11 @@
 import { prisma } from "@/lib/prisma";
-import { crearCita, cambiarEstadoCita, desconectarGoogleCalendar } from "@/app/actions/agenda";
+import { cambiarEstadoCita, desconectarGoogleCalendar } from "@/app/actions/agenda";
 import { EstadoCita } from "@/app/generated/prisma/client";
 import { getAuthUrl } from "@/lib/google-calendar";
 import EmptyState from "@/app/components/help/EmptyState";
 import LoadingButton from "@/app/components/ui/LoadingButton";
 import ScrollToTop from "@/app/components/ScrollToTop";
+import CitaForm from "@/app/components/forms/CitaForm";
 
 function formatearFecha(fecha: Date): string {
   return new Intl.DateTimeFormat("es-MX", {
@@ -185,96 +186,7 @@ export default async function AgendaPage({
       </div>
 
       {/* Formulario para nueva cita */}
-      <div className="bg-white rounded-xl p-6 mb-6" style={{ border: "1px solid #E2E9F0" }}>
-        <h2 className="text-lg font-semibold font-sora mb-5" style={{ color: "#0E2436" }}>
-          ➕ Agendar nueva cita/tarea
-        </h2>
-        <form action={crearCita} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <input type="hidden" name="empresaId" value={id} />
-
-          <div>
-            <label className="block text-xs font-medium mb-1.5" style={{ color: "#41566B" }}>
-              Nombre del cliente <span style={{ color: "#DC2626" }}>*</span>
-            </label>
-            <input
-              type="text"
-              name="nombreCliente"
-              required
-              placeholder="Ej: Juan Pérez"
-              className="w-full px-3 py-2.5 rounded-lg text-sm focus:outline-none"
-              style={{ border: "1px solid #E2E9F0", color: "#0E2436" }}
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-medium mb-1.5" style={{ color: "#41566B" }}>
-              Teléfono (WhatsApp) <span style={{ color: "#DC2626" }}>*</span>
-            </label>
-            <input
-              type="tel"
-              name="telefono"
-              required
-              placeholder="+521234567890"
-              className="w-full px-3 py-2.5 rounded-lg text-sm focus:outline-none"
-              style={{ border: "1px solid #E2E9F0", color: "#0E2436" }}
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-medium mb-1.5" style={{ color: "#41566B" }}>
-              Fecha y hora de inicio <span style={{ color: "#DC2626" }}>*</span>
-            </label>
-            <input
-              type="datetime-local"
-              name="inicio"
-              required
-              className="w-full px-3 py-2.5 rounded-lg text-sm focus:outline-none"
-              style={{ border: "1px solid #E2E9F0", color: "#0E2436" }}
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-medium mb-1.5" style={{ color: "#41566B" }}>
-              Duración <span style={{ color: "#DC2626" }}>*</span>
-            </label>
-            <select
-              name="duracion"
-              defaultValue="60"
-              className="w-full px-3 py-2.5 rounded-lg text-sm focus:outline-none"
-              style={{ border: "1px solid #E2E9F0", color: "#0E2436" }}
-            >
-              <option value="15">15 min</option>
-              <option value="30">30 min</option>
-              <option value="45">45 min</option>
-              <option value="60">1 hora</option>
-              <option value="90">1.5 horas</option>
-              <option value="120">2 horas</option>
-            </select>
-          </div>
-
-          <div className="md:col-span-2">
-            <label className="block text-xs font-medium mb-1.5" style={{ color: "#41566B" }}>
-              Notas adicionales
-            </label>
-            <textarea
-              name="notas"
-              rows={3}
-              placeholder="Detalles de la cita o tarea..."
-              className="w-full px-3 py-2.5 rounded-lg text-sm focus:outline-none resize-none"
-              style={{ border: "1px solid #E2E9F0", color: "#0E2436" }}
-            />
-          </div>
-
-          <div className="md:col-span-2">
-            <LoadingButton
-              type="submit"
-              className="w-full text-white text-sm font-medium py-2.5 rounded-lg transition-opacity hover:opacity-90 grad-bg"
-            >
-              Crear cita/tarea
-            </LoadingButton>
-          </div>
-        </form>
-      </div>
+      <CitaForm empresaId={id} />
 
       {/* Lista de citas futuras */}
       {citasFuturas.length > 0 && (
