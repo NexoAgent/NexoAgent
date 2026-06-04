@@ -118,9 +118,7 @@ export default async function AsignarPlanPage({
               return (
                 <label
                   key={plan.id}
-                  className={`relative cursor-pointer group ${
-                    esActual ? "ring-2 ring-blue-500" : ""
-                  }`}
+                  className="relative cursor-pointer group block"
                 >
                   <input
                     type="radio"
@@ -130,7 +128,7 @@ export default async function AsignarPlanPage({
                     required
                     className="sr-only peer"
                   />
-                  <div className="border-2 border-gray-200 rounded-xl p-5 peer-checked:border-blue-500 peer-checked:bg-blue-50 transition hover:border-gray-300">
+                  <div className="border-2 border-gray-200 rounded-xl p-5 peer-checked:border-blue-500 peer-checked:bg-blue-50 peer-checked:shadow-lg transition-all hover:border-gray-300 hover:shadow-md">
                     <div className="flex items-center justify-between mb-3">
                       <h3 className="font-bold text-lg text-gray-900">{plan.nombre}</h3>
                       {esActual && (

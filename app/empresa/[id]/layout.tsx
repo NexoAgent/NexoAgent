@@ -11,6 +11,7 @@ import ScrollToTop from "@/app/components/ScrollToTop";
 import GlobalSearch from "@/app/components/GlobalSearch";
 import KeyboardShortcutsHelp from "@/app/components/KeyboardShortcutsHelp";
 import EmpresaTour from "@/app/components/EmpresaTour";
+import ActiveNavLink from "@/app/components/ActiveNavLink";
 
 type NavItem = {
   href: string;
@@ -143,11 +144,12 @@ export default async function EmpresaLayout({
               );
             }
             return (
-              <Link
+              <ActiveNavLink
                 key={item.label}
                 href={href}
+                exact={item.href === ""}
                 className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all text-gray-600 hover:text-gray-900 hover:bg-gradient-to-r hover:from-blue-50 hover:to-emerald-50 group"
-                data-tour={item.label.toLowerCase().replace(/\s/g, '-')}
+                activeClassName="bg-gradient-to-r from-blue-50 to-emerald-50 text-gray-900 font-semibold shadow-sm"
               >
                 <span className="transition-colors">{item.icon}</span>
                 <span>{item.label}</span>
@@ -156,7 +158,7 @@ export default async function EmpresaLayout({
                     {pendientes}
                   </span>
                 )}
-              </Link>
+              </ActiveNavLink>
             );
           })}
         </nav>
