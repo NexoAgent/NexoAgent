@@ -101,7 +101,7 @@ export async function crearEmpresaConUsuarios(formData: FormData) {
 
     // Validar que el RIF no exista (si se proporcionó)
     if (rif) {
-      const empresaConRif = await prisma.empresa.findUnique({
+      const empresaConRif = await prisma.empresa.findFirst({
         where: { rif },
       });
 
@@ -112,7 +112,7 @@ export async function crearEmpresaConUsuarios(formData: FormData) {
 
     // Validar que el NIF no exista (si se proporcionó)
     if (nif) {
-      const empresaConNif = await prisma.empresa.findUnique({
+      const empresaConNif = await prisma.empresa.findFirst({
         where: { nif },
       });
 
