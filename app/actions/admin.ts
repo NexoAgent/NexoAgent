@@ -27,9 +27,14 @@ export async function crearEmpresaConUsuario(formData: FormData) {
     const telefono = (formData.get("telefono") as string) || null;
     const telefonoWhatsapp = formData.get("telefonoWhatsapp") as string;
     const email = (formData.get("email") as string) || null;
+    const planId = (formData.get("planId") as string) || null;
 
     if (!nombre || !telefonoWhatsapp) {
       redirect("/admin/empresas/nueva?error=Faltan+campos+requeridos");
+    }
+
+    if (!planId) {
+      redirect("/admin/empresas/nueva?error=Debe+seleccionar+un+plan");
     }
 
     // Datos del usuario (opcional)
@@ -62,7 +67,12 @@ export async function crearEmpresaConUsuario(formData: FormData) {
     }
 
     // Crear empresa
-    console.log("[crearEmpresaConUsuario] Creando empresa:", { nombre, telefonoWhatsapp });
+    console.log("[crearEmpresaConUsuario] Creando empresa:", { nombre, telefonoWhatsapp, planId });
+
+    // Calcular fecha de vencimiento (14 días para trial)
+    const fechaVencimiento = new Date();
+    fechaVencimiento.setDate(fechaVencimiento.getDate() + 14);
+
     const empresa = await prisma.empresa.create({
       data: {
         nombre,
@@ -73,6 +83,9 @@ export async function crearEmpresaConUsuario(formData: FormData) {
         telefono,
         telefonoWhatsapp,
         email,
+        planId,
+        estadoPlan: "TRIAL",
+        fechaVencimiento,
       },
     });
 
