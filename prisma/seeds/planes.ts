@@ -1,6 +1,4 @@
-import { PrismaClient } from "../../app/generated/prisma";
-
-const prisma = new PrismaClient();
+import { prisma } from "../../lib/prisma";
 
 export async function seedPlanes() {
   console.log("🌱 Seeding planes...");
@@ -9,8 +7,8 @@ export async function seedPlanes() {
     {
       nombre: "STARTER",
       descripcion: "Plan ideal para pequeños negocios que inician con automatización",
-      precio: 49.0,
-      precioMXN: 999.0,
+      precio: 49.0, // USD
+      precioMXN: null,
       maxWhatsApps: 1,
       maxAgentes: 3,
       maxConversacionesMes: 500,
@@ -27,8 +25,8 @@ export async function seedPlanes() {
     {
       nombre: "BUSINESS",
       descripcion: "Plan profesional con múltiples canales y agentes especializados",
-      precio: 149.0,
-      precioMXN: 2999.0,
+      precio: 149.0, // USD
+      precioMXN: null,
       maxWhatsApps: 3,
       maxAgentes: 10,
       maxConversacionesMes: 2000,
@@ -45,8 +43,8 @@ export async function seedPlanes() {
     {
       nombre: "CORPORATIVO",
       descripcion: "Plan empresarial con capacidades ilimitadas y soporte prioritario",
-      precio: 399.0,
-      precioMXN: 7999.0,
+      precio: 399.0, // USD
+      precioMXN: null,
       maxWhatsApps: 10,
       maxAgentes: -1, // Ilimitado
       maxConversacionesMes: 10000,

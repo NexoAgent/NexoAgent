@@ -318,8 +318,8 @@ model Plan {
   id                    String    @id @default(cuid())
   nombre                String    @unique // "STARTER", "BUSINESS", "CORPORATIVO"
   descripcion           String?
-  precio                Float     // Precio mensual en USD
-  precioMXN             Float?    // Precio en MXN
+  precio                Float     // Precio mensual en USD o EUR
+  precioMXN             Float?    // Opcional: precio en moneda local
 
   // Límites
   maxWhatsApps          Int       // 1, 3, 10
