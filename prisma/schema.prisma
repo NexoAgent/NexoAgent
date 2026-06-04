@@ -64,8 +64,27 @@ model Empresa {
   conversaciones        Conversacion[]
   documentos            Documento[]
   memoria               MemoriaEmpresa[]
+  numerosWhatsApp       NumeroWhatsApp[]
   pushSubscriptions     PushSubscription[]
   usuario               Usuario?            @relation("EmpresaUsuario")
+}
+
+model NumeroWhatsApp {
+  id                String          @id @default(cuid())
+  empresaId         String
+  telefono          String          @unique // Número en formato internacional +584241234567
+  nombre            String?         // Nombre/alias del número (ej: "Soporte", "Ventas")
+  activo            Boolean         @default(true)
+  esPrincipal       Boolean         @default(false) // Solo uno puede ser principal
+  creadoEn          DateTime        @default(now())
+  actualizadoEn     DateTime        @updatedAt
+
+  // Relaciones
+  empresa           Empresa         @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  conversaciones    Conversacion[]
+
+  @@index([empresaId])
+  @@index([telefono])
 }
 
 model Cita {
@@ -128,17 +147,21 @@ model Contacto {
 }
 
 model Conversacion {
-  id            String    @id @default(cuid())
-  empresaId     String
-  numeroCliente String
-  estado        Estado    @default(ACTIVA)
-  creadoEn      DateTime  @default(now())
-  actualizadoEn DateTime  @updatedAt
-  modoHumano    Boolean   @default(false)
-  contactoId    String?
-  contacto      Contacto? @relation(fields: [contactoId], references: [id])
-  empresa       Empresa   @relation(fields: [empresaId], references: [id])
-  mensajes      Mensaje[]
+  id               String           @id @default(cuid())
+  empresaId        String
+  numeroCliente    String
+  numeroWhatsAppId String?          // Nullable para migrar datos existentes
+  estado           Estado           @default(ACTIVA)
+  creadoEn         DateTime         @default(now())
+  actualizadoEn    DateTime         @updatedAt
+  modoHumano       Boolean          @default(false)
+  contactoId       String?
+  contacto         Contacto?        @relation(fields: [contactoId], references: [id])
+  empresa          Empresa          @relation(fields: [empresaId], references: [id])
+  numeroWhatsApp   NumeroWhatsApp?  @relation(fields: [numeroWhatsAppId], references: [id])
+  mensajes         Mensaje[]
+
+  @@index([numeroWhatsAppId])
 }
 
 model Mensaje {

@@ -78,11 +78,13 @@ async function checkWhatsAppLimit(
   empresa: Empresa,
   plan: Plan
 ): Promise<LimitCheck> {
-  // Contar números de WhatsApp actuales
-  // NOTA: Por ahora solo tiene 1 (telefonoWhatsapp en Empresa)
-  // Cuando implementes NumeroWhatsApp, cambiar esto:
-  // const current = await prisma.numeroWhatsApp.count({ where: { empresaId: empresa.id } });
-  const current = 1; // Temporal: siempre tienen 1
+  // Contar números de WhatsApp activos
+  const current = await prisma.numeroWhatsApp.count({
+    where: {
+      empresaId: empresa.id,
+      activo: true,
+    },
+  });
 
   const max = plan.maxWhatsApps;
   const ilimitado = max === -1;
