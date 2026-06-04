@@ -19,10 +19,7 @@ export default async function AdminPage({
 
   const empresas = await prisma.empresa.findMany({
     include: {
-      usuarios: {
-        where: { esUsuarioPrincipal: true },
-        take: 1,
-      },
+      usuarios: true,
       plan: true,
       _count: {
         select: {
@@ -150,9 +147,9 @@ export default async function AdminPage({
                       <div className="text-xs" style={{ color: "#0E2436" }}>
                         {empresa.email || empresa.telefonoWhatsapp}
                       </div>
-                      {empresa.usuarios[0] && (
+                      {empresa.usuarios && empresa.usuarios.length > 0 && (
                         <div className="text-xs mt-0.5" style={{ color: "#73869A" }}>
-                          👤 {empresa.usuarios[0].nombre}
+                          👤 {empresa.usuarios.find(u => u.esUsuarioPrincipal)?.nombre || empresa.usuarios[0].nombre}
                         </div>
                       )}
                     </td>
@@ -269,12 +266,12 @@ export default async function AdminPage({
                         </div>
                       )}
                     </div>
-                    {empresa.usuarios[0] ? (
+                    {empresa.usuarios && empresa.usuarios.length > 0 ? (
                       <div>
-                        <span className="text-xs font-medium" style={{ color: "#73869A" }}>Usuario Principal: </span>
-                        <span style={{ color: "#0E2436" }}>{empresa.usuarios[0].nombre}</span>
+                        <span className="text-xs font-medium" style={{ color: "#73869A" }}>Usuario: </span>
+                        <span style={{ color: "#0E2436" }}>{empresa.usuarios.find(u => u.esUsuarioPrincipal)?.nombre || empresa.usuarios[0].nombre}</span>
                         <div className="text-xs mt-0.5" style={{ color: "#73869A" }}>
-                          {empresa.usuarios[0].email}
+                          {empresa.usuarios.find(u => u.esUsuarioPrincipal)?.email || empresa.usuarios[0].email}
                         </div>
                       </div>
                     ) : (

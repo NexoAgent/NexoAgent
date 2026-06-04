@@ -178,10 +178,7 @@ export async function crearUsuarioCliente(
   const empresa = await prisma.empresa.findUnique({
     where: { id: empresaId },
     include: {
-      usuarios: {
-        where: { esUsuarioPrincipal: true },
-        take: 1,
-      },
+      usuarios: true,
     },
   });
 
@@ -189,8 +186,12 @@ export async function crearUsuarioCliente(
     throw new Error("Empresa no encontrada");
   }
 
-  if (empresa.usuarios.length > 0) {
-    throw new Error("Esta empresa ya tiene un usuario principal asignado");
+  if (empresa.usuarios && empresa.usuarios.length > 0) {
+    // Ya tiene usuarios, verificar si tiene principal
+    const tienePrincipal = empresa.usuarios.some(u => u.esUsuarioPrincipal);
+    if (tienePrincipal) {
+      throw new Error("Esta empresa ya tiene un usuario principal asignado");
+    }
   }
 
   // Verificar que el email no exista
