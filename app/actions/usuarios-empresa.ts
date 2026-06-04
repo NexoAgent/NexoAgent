@@ -184,8 +184,6 @@ export async function crearEmpresaConUsuarios(formData: FormData) {
           nombre: usuarioPrincipalNombre,
           rol: "CLIENTE",
           empresaId: empresa.id,
-          esUsuarioPrincipal: true,
-          requiereCambioPassword: false,
         },
       });
 
@@ -202,8 +200,6 @@ export async function crearEmpresaConUsuarios(formData: FormData) {
             nombre: usuario.nombre,
             rol: "CLIENTE",
             empresaId: empresa.id,
-            esUsuarioPrincipal: false,
-            requiereCambioPassword: true,
           },
         });
 
@@ -269,7 +265,7 @@ export async function cambiarPasswordObligatorio(formData: FormData) {
     // Obtener usuario
     const usuario = await prisma.usuario.findUnique({
       where: { id: session.user.id },
-      select: { id: true, password: true, requiereCambioPassword: true },
+      select: { id: true, password: true },
     });
 
     if (!usuario || !usuario.password) {
@@ -294,7 +290,6 @@ export async function cambiarPasswordObligatorio(formData: FormData) {
       where: { id: usuario.id },
       data: {
         password: passwordHash,
-        requiereCambioPassword: false,
       },
     });
 
