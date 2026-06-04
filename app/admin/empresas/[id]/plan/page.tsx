@@ -128,14 +128,13 @@ export default async function AsignarPlanPage({
                     required
                     className="sr-only peer"
                   />
-                  <div className="border-3 rounded-xl p-5 peer-checked:border-blue-600 peer-checked:bg-blue-50 border-gray-200 transition-colors" style={{ borderWidth: '3px' }}>
+                  <div className="rounded-xl p-5 border-2 peer-checked:border-blue-500 peer-checked:bg-blue-50 border-gray-200 bg-white transition-colors">
                     <div className="flex items-center justify-between mb-3">
                       <h3 className="font-bold text-lg text-gray-900">{plan.nombre}</h3>
-                      {esActual && (
-                        <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded">
-                          Actual
-                        </span>
-                      )}
+                      {/* Badge siempre presente, solo cambia visibilidad con opacity */}
+                      <span className={`px-2 py-1 text-xs font-medium rounded transition-opacity ${esActual ? 'bg-blue-100 text-blue-700 opacity-100' : 'bg-gray-100 text-gray-400 opacity-0'}`}>
+                        Seleccionado
+                      </span>
                     </div>
 
                     <div className="mb-4">
