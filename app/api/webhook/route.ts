@@ -11,10 +11,22 @@ const FRASES_HUMANO = [
   "quiero hablar con un humano",
   "quiero hablar con un agente",
   "hablar con alguien",
+  "hablar con una persona",
   "atención humana",
   "operador",
   "agente humano",
   "persona real",
+  "necesito ayuda humana",
+  "necesito un humano",
+  "necesito un operador",
+  "necesito un agente",
+  "asesor humano",
+  "representante",
+  "soporte humano",
+  "hablar con alguien",
+  "persona de verdad",
+  "alguien real",
+  "asistencia humana",
 ];
 
 function solicitaHumano(mensaje: string): boolean {
@@ -117,23 +129,33 @@ export async function POST(request: Request) {
     });
 
     // Notificar nuevo mensaje
+    console.log(`📬 Enviando notificación de nuevo mensaje para empresa ${empresa.id}`);
     try {
       await notificarNuevoMensaje(empresa.id, conversacion.id, numeroCliente, body);
+      console.log(`✅ Notificación de mensaje enviada`);
     } catch (error) {
-      console.error("Error al enviar notificación de nuevo mensaje:", error);
+      console.error("❌ Error al enviar notificación de nuevo mensaje:", error);
     }
 
-    if (solicitaHumano(body)) {
+    // Verificar si solicita modo humano
+    const activaModoHumano = solicitaHumano(body);
+    console.log(`🤔 ¿Solicita modo humano? ${activaModoHumano} para mensaje: "${body}"`);
+
+    if (activaModoHumano) {
+      console.log(`🚨 ACTIVANDO MODO HUMANO para conversación ${conversacion.id}`);
+
       await prisma.conversacion.update({
         where: { id: conversacion.id },
         data: { modoHumano: true },
       });
 
       // Notificar activación de modo humano
+      console.log(`🔔 Enviando notificación URGENTE de modo humano`);
       try {
         await notificarModoHumano(empresa.id, conversacion.id, numeroCliente);
+        console.log(`✅ Notificación de modo humano enviada`);
       } catch (error) {
-        console.error("Error al enviar notificación de modo humano:", error);
+        console.error("❌ Error al enviar notificación de modo humano:", error);
       }
 
       return twiml(

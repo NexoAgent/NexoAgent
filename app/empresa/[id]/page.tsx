@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import NotificationTester from "@/app/components/NotificationTester";
 
 export default async function EmpresaHomePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -30,6 +31,9 @@ export default async function EmpresaHomePage({ params }: { params: Promise<{ id
         <h1 className="text-2xl font-bold text-gray-900">{empresa.nombre}</h1>
         <p className="text-gray-500 text-sm mt-1">Resumen de actividad del asistente</p>
       </div>
+
+      {/* Panel de prueba de notificaciones */}
+      <NotificationTester empresaId={id} />
 
       {pendientes > 0 && (
         <div className="mb-6 bg-amber-50 border border-amber-200 rounded-xl px-5 py-4 flex items-center justify-between">
