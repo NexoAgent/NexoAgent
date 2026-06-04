@@ -87,268 +87,333 @@ export async function crearTicketPublico(formData: FormData) {
  * Crear un nuevo ticket
  */
 export async function crearTicket(formData: FormData) {
-  const session = await auth();
-  if (!session?.user) {
-    redirect("/login");
+  try {
+    const session = await auth();
+    if (!session?.user) {
+      redirect("/login");
+    }
+
+    const titulo = formData.get("titulo") as string;
+    const descripcion = formData.get("descripcion") as string;
+    const prioridad = formData.get("prioridad") as string;
+    const categoria = formData.get("categoria") as string;
+
+    if (!titulo || !descripcion) {
+      // Determinar la ruta de retorno según el rol
+      const errorPath = session.user.rol === "PROVEEDOR"
+        ? "/dashboard/tickets/nuevo?error=Datos+incompletos"
+        : `/empresa/${session.user.empresaId}/soporte/nuevo?error=Datos+incompletos`;
+      redirect(errorPath);
+    }
+
+    const ticket = await prisma.ticket.create({
+      data: {
+        titulo,
+        descripcion,
+        prioridad: prioridad as any,
+        categoria: categoria as any,
+        creadoPorId: session.user.id,
+        empresaId: session.user.empresaId,
+      },
+    });
+
+    // Crear mensaje inicial del ticket
+    await prisma.mensajeTicket.create({
+      data: {
+        ticketId: ticket.id,
+        usuarioId: session.user.id,
+        mensaje: descripcion,
+      },
+    });
+
+    // Enviar emails a usuarios PROVEEDOR
+    const proveedores = await prisma.usuario.findMany({
+      where: { rol: "PROVEEDOR" },
+      select: { email: true, nombre: true },
+    });
+
+    for (const proveedor of proveedores) {
+      enviarEmailNuevoTicket({
+        ticketId: ticket.id,
+        titulo,
+        descripcion,
+        prioridad,
+        categoria,
+        creadoPor: session.user.name || session.user.email || "Usuario",
+        destinatarioEmail: proveedor.email,
+        destinatarioNombre: proveedor.nombre,
+      }).catch((err) => console.error("Error enviando email:", err));
+    }
+
+    // Revalidar rutas
+    revalidatePath("/dashboard/tickets");
+    if (session.user.empresaId) {
+      revalidatePath(`/empresa/${session.user.empresaId}/soporte`);
+    }
+
+    // Redirigir según el rol del usuario
+    const redirectPath = session.user.rol === "PROVEEDOR"
+      ? `/dashboard/tickets/${ticket.id}`
+      : `/empresa/${session.user.empresaId}/soporte/${ticket.id}`;
+
+    redirect(redirectPath);
+  } catch (error) {
+    console.error("[crearTicket] Error:", error);
+    // Re-lanzar errores de redirect
+    if (error && typeof error === 'object' && 'digest' in error) {
+      throw error;
+    }
+    // Para otros errores, redirigir con mensaje
+    redirect("/dashboard/tickets?error=Error+al+crear+el+ticket");
   }
-
-  const titulo = formData.get("titulo") as string;
-  const descripcion = formData.get("descripcion") as string;
-  const prioridad = formData.get("prioridad") as string;
-  const categoria = formData.get("categoria") as string;
-
-  if (!titulo || !descripcion) {
-    redirect("/dashboard/tickets/nuevo?error=Datos+incompletos");
-  }
-
-  const ticket = await prisma.ticket.create({
-    data: {
-      titulo,
-      descripcion,
-      prioridad: prioridad as any,
-      categoria: categoria as any,
-      creadoPorId: session.user.id,
-      empresaId: session.user.empresaId,
-    },
-  });
-
-  // Crear mensaje inicial del ticket
-  await prisma.mensajeTicket.create({
-    data: {
-      ticketId: ticket.id,
-      usuarioId: session.user.id,
-      mensaje: descripcion,
-    },
-  });
-
-  // Enviar emails a usuarios PROVEEDOR
-  const proveedores = await prisma.usuario.findMany({
-    where: { rol: "PROVEEDOR" },
-    select: { email: true, nombre: true },
-  });
-
-  for (const proveedor of proveedores) {
-    enviarEmailNuevoTicket({
-      ticketId: ticket.id,
-      titulo,
-      descripcion,
-      prioridad,
-      categoria,
-      creadoPor: session.user.name || session.user.email || "Usuario",
-      destinatarioEmail: proveedor.email,
-      destinatarioNombre: proveedor.nombre,
-    }).catch((err) => console.error("Error enviando email:", err));
-  }
-
-  revalidatePath("/dashboard/tickets");
-  redirect(`/dashboard/tickets/${ticket.id}`);
 }
 
 /**
  * Agregar mensaje a un ticket
  */
 export async function agregarMensajeTicket(formData: FormData) {
-  const session = await auth();
-  if (!session?.user) {
-    redirect("/login");
-  }
+  try {
+    const session = await auth();
+    if (!session?.user) {
+      redirect("/login");
+    }
 
-  const ticketId = formData.get("ticketId") as string;
-  const mensaje = formData.get("mensaje") as string;
-  const esInterno = formData.get("esInterno") === "true";
+    const ticketId = formData.get("ticketId") as string;
+    const mensaje = formData.get("mensaje") as string;
+    const esInterno = formData.get("esInterno") === "true";
 
-  if (!ticketId || !mensaje) {
-    return;
-  }
+    if (!ticketId || !mensaje) {
+      return;
+    }
 
-  // Verificar que el usuario tenga acceso al ticket
-  const ticket = await prisma.ticket.findUnique({
-    where: { id: ticketId },
-    include: {
-      creadoPor: { select: { email: true, nombre: true, id: true } },
-      asignadoA: { select: { email: true, nombre: true, id: true } },
-    },
-  });
-
-  if (!ticket) {
-    redirect("/dashboard/tickets?error=Ticket+no+encontrado");
-  }
-
-  // Solo PROVEEDOR puede crear mensajes internos
-  const esInternoFinal = session.user.rol === "PROVEEDOR" ? esInterno : false;
-
-  await prisma.mensajeTicket.create({
-    data: {
-      ticketId,
-      usuarioId: session.user.id,
-      mensaje,
-      esInterno: esInternoFinal,
-    },
-  });
-
-  // Actualizar timestamp del ticket
-  await prisma.ticket.update({
-    where: { id: ticketId },
-    data: { actualizadoEn: new Date() },
-  });
-
-  // Enviar email a los participantes (excepto quien respondió)
-  const destinatarios = [];
-
-  // Si es mensaje interno, solo notificar a proveedores
-  if (esInternoFinal) {
-    const proveedores = await prisma.usuario.findMany({
-      where: {
-        rol: "PROVEEDOR",
-        id: { not: session.user.id },
+    // Verificar que el usuario tenga acceso al ticket
+    const ticket = await prisma.ticket.findUnique({
+      where: { id: ticketId },
+      include: {
+        creadoPor: { select: { email: true, nombre: true, id: true } },
+        asignadoA: { select: { email: true, nombre: true, id: true } },
       },
-      select: { email: true, nombre: true },
     });
-    destinatarios.push(...proveedores);
-  } else {
-    // Mensaje público: notificar al creador y asignado (si no son quien respondió)
-    if (ticket.creadoPor.id !== session.user.id) {
-      destinatarios.push(ticket.creadoPor);
+
+    if (!ticket) {
+      const errorPath = session.user.rol === "PROVEEDOR"
+        ? "/dashboard/tickets?error=Ticket+no+encontrado"
+        : `/empresa/${session.user.empresaId}/soporte?error=Ticket+no+encontrado`;
+      redirect(errorPath);
     }
-    if (ticket.asignadoA && ticket.asignadoA.id !== session.user.id) {
-      destinatarios.push(ticket.asignadoA);
+
+    // Solo PROVEEDOR puede crear mensajes internos
+    const esInternoFinal = session.user.rol === "PROVEEDOR" ? esInterno : false;
+
+    await prisma.mensajeTicket.create({
+      data: {
+        ticketId,
+        usuarioId: session.user.id,
+        mensaje,
+        esInterno: esInternoFinal,
+      },
+    });
+
+    // Actualizar timestamp del ticket
+    await prisma.ticket.update({
+      where: { id: ticketId },
+      data: { actualizadoEn: new Date() },
+    });
+
+    // Enviar email a los participantes (excepto quien respondió)
+    const destinatarios = [];
+
+    // Si es mensaje interno, solo notificar a proveedores
+    if (esInternoFinal) {
+      const proveedores = await prisma.usuario.findMany({
+        where: {
+          rol: "PROVEEDOR",
+          id: { not: session.user.id },
+        },
+        select: { email: true, nombre: true },
+      });
+      destinatarios.push(...proveedores);
+    } else {
+      // Mensaje público: notificar al creador y asignado (si no son quien respondió)
+      if (ticket.creadoPor.id !== session.user.id) {
+        destinatarios.push(ticket.creadoPor);
+      }
+      if (ticket.asignadoA && ticket.asignadoA.id !== session.user.id) {
+        destinatarios.push(ticket.asignadoA);
+      }
+    }
+
+    for (const destinatario of destinatarios) {
+      enviarEmailRespuestaTicket({
+        ticketId,
+        titulo: ticket.titulo,
+        mensaje,
+        respuestaDe: session.user.name || session.user.email || "Usuario",
+        destinatarioEmail: destinatario.email,
+        destinatarioNombre: destinatario.nombre,
+        esInterno: esInternoFinal,
+      }).catch((err) => console.error("Error enviando email:", err));
+    }
+
+    // Revalidar ambas rutas
+    revalidatePath(`/dashboard/tickets/${ticketId}`);
+    if (ticket.empresaId) {
+      revalidatePath(`/empresa/${ticket.empresaId}/soporte/${ticketId}`);
+    }
+  } catch (error) {
+    console.error("[agregarMensajeTicket] Error:", error);
+    // Re-lanzar errores de redirect
+    if (error && typeof error === 'object' && 'digest' in error) {
+      throw error;
     }
   }
-
-  for (const destinatario of destinatarios) {
-    enviarEmailRespuestaTicket({
-      ticketId,
-      titulo: ticket.titulo,
-      mensaje,
-      respuestaDe: session.user.name || session.user.email || "Usuario",
-      destinatarioEmail: destinatario.email,
-      destinatarioNombre: destinatario.nombre,
-      esInterno: esInternoFinal,
-    }).catch((err) => console.error("Error enviando email:", err));
-  }
-
-  revalidatePath(`/dashboard/tickets/${ticketId}`);
 }
 
 /**
  * Actualizar estado de un ticket
  */
 export async function actualizarEstadoTicket(formData: FormData) {
-  const session = await auth();
-  if (!session?.user) {
-    redirect("/login");
+  try {
+    const session = await auth();
+    if (!session?.user) {
+      redirect("/login");
+    }
+
+    const ticketId = formData.get("ticketId") as string;
+    const estado = formData.get("estado") as string;
+
+    if (!ticketId || !estado) {
+      return;
+    }
+
+    // Obtener estado anterior
+    const ticket = await prisma.ticket.findUnique({
+      where: { id: ticketId },
+      include: {
+        creadoPor: { select: { email: true, nombre: true } },
+      },
+    });
+
+    if (!ticket) {
+      return;
+    }
+
+    const estadoAnterior = ticket.estado;
+
+    const updateData: any = {
+      estado: estado as any,
+      actualizadoEn: new Date(),
+    };
+
+    // Si se está cerrando o resolviendo, guardar fecha
+    if (estado === "CERRADO" || estado === "RESUELTO") {
+      updateData.cerradoEn = new Date();
+    }
+
+    await prisma.ticket.update({
+      where: { id: ticketId },
+      data: updateData,
+    });
+
+    // Notificar al creador del ticket si el estado cambió
+    if (estadoAnterior !== estado) {
+      enviarEmailCambioEstado({
+        ticketId,
+        titulo: ticket.titulo,
+        estadoAnterior,
+        estadoNuevo: estado,
+        cambiadoPor: session.user.name || session.user.email || "Usuario",
+        destinatarioEmail: ticket.creadoPor.email,
+        destinatarioNombre: ticket.creadoPor.nombre,
+      }).catch((err) => console.error("Error enviando email:", err));
+    }
+
+    // Revalidar ambas rutas
+    revalidatePath(`/dashboard/tickets/${ticketId}`);
+    revalidatePath("/dashboard/tickets");
+    if (ticket.empresaId) {
+      revalidatePath(`/empresa/${ticket.empresaId}/soporte/${ticketId}`);
+      revalidatePath(`/empresa/${ticket.empresaId}/soporte`);
+    }
+  } catch (error) {
+    console.error("[actualizarEstadoTicket] Error:", error);
+    // Re-lanzar errores de redirect
+    if (error && typeof error === 'object' && 'digest' in error) {
+      throw error;
+    }
   }
-
-  const ticketId = formData.get("ticketId") as string;
-  const estado = formData.get("estado") as string;
-
-  if (!ticketId || !estado) {
-    return;
-  }
-
-  // Obtener estado anterior
-  const ticket = await prisma.ticket.findUnique({
-    where: { id: ticketId },
-    include: {
-      creadoPor: { select: { email: true, nombre: true } },
-    },
-  });
-
-  if (!ticket) {
-    return;
-  }
-
-  const estadoAnterior = ticket.estado;
-
-  const updateData: any = {
-    estado: estado as any,
-    actualizadoEn: new Date(),
-  };
-
-  // Si se está cerrando o resolviendo, guardar fecha
-  if (estado === "CERRADO" || estado === "RESUELTO") {
-    updateData.cerradoEn = new Date();
-  }
-
-  await prisma.ticket.update({
-    where: { id: ticketId },
-    data: updateData,
-  });
-
-  // Notificar al creador del ticket si el estado cambió
-  if (estadoAnterior !== estado) {
-    enviarEmailCambioEstado({
-      ticketId,
-      titulo: ticket.titulo,
-      estadoAnterior,
-      estadoNuevo: estado,
-      cambiadoPor: session.user.name || session.user.email || "Usuario",
-      destinatarioEmail: ticket.creadoPor.email,
-      destinatarioNombre: ticket.creadoPor.nombre,
-    }).catch((err) => console.error("Error enviando email:", err));
-  }
-
-  revalidatePath(`/dashboard/tickets/${ticketId}`);
-  revalidatePath("/dashboard/tickets");
 }
 
 /**
  * Asignar ticket a un usuario (solo PROVEEDOR)
  */
 export async function asignarTicket(formData: FormData) {
-  const session = await auth();
-  if (!session?.user || session.user.rol !== "PROVEEDOR") {
-    redirect("/login");
-  }
+  try {
+    const session = await auth();
+    if (!session?.user || session.user.rol !== "PROVEEDOR") {
+      redirect("/login");
+    }
 
-  const ticketId = formData.get("ticketId") as string;
-  const asignadoAId = formData.get("asignadoAId") as string;
+    const ticketId = formData.get("ticketId") as string;
+    const asignadoAId = formData.get("asignadoAId") as string;
 
-  if (!ticketId) {
-    return;
-  }
+    if (!ticketId) {
+      return;
+    }
 
-  // Obtener info del ticket y nuevo asignado
-  const ticket = await prisma.ticket.findUnique({
-    where: { id: ticketId },
-  });
-
-  if (!ticket) {
-    return;
-  }
-
-  const asignadoAnteriorId = ticket.asignadoAId;
-
-  await prisma.ticket.update({
-    where: { id: ticketId },
-    data: {
-      asignadoAId: asignadoAId || null,
-      estado: asignadoAId ? "EN_PROGRESO" : "ABIERTO",
-    },
-  });
-
-  // Si se asignó a alguien nuevo, enviar email
-  if (asignadoAId && asignadoAId !== asignadoAnteriorId) {
-    const nuevoAsignado = await prisma.usuario.findUnique({
-      where: { id: asignadoAId },
-      select: { email: true, nombre: true },
+    // Obtener info del ticket y nuevo asignado
+    const ticket = await prisma.ticket.findUnique({
+      where: { id: ticketId },
     });
 
-    if (nuevoAsignado) {
-      enviarEmailAsignacionTicket({
-        ticketId,
-        titulo: ticket.titulo,
-        descripcion: ticket.descripcion,
-        prioridad: ticket.prioridad,
-        asignadoPor: session.user.name || session.user.email || "Usuario",
-        destinatarioEmail: nuevoAsignado.email,
-        destinatarioNombre: nuevoAsignado.nombre,
-      }).catch((err) => console.error("Error enviando email:", err));
+    if (!ticket) {
+      return;
+    }
+
+    const asignadoAnteriorId = ticket.asignadoAId;
+
+    await prisma.ticket.update({
+      where: { id: ticketId },
+      data: {
+        asignadoAId: asignadoAId || null,
+        estado: asignadoAId ? "EN_PROGRESO" : "ABIERTO",
+      },
+    });
+
+    // Si se asignó a alguien nuevo, enviar email
+    if (asignadoAId && asignadoAId !== asignadoAnteriorId) {
+      const nuevoAsignado = await prisma.usuario.findUnique({
+        where: { id: asignadoAId },
+        select: { email: true, nombre: true },
+      });
+
+      if (nuevoAsignado) {
+        enviarEmailAsignacionTicket({
+          ticketId,
+          titulo: ticket.titulo,
+          descripcion: ticket.descripcion,
+          prioridad: ticket.prioridad,
+          asignadoPor: session.user.name || session.user.email || "Usuario",
+          destinatarioEmail: nuevoAsignado.email,
+          destinatarioNombre: nuevoAsignado.nombre,
+        }).catch((err) => console.error("Error enviando email:", err));
+      }
+    }
+
+    // Revalidar ambas rutas
+    revalidatePath(`/dashboard/tickets/${ticketId}`);
+    revalidatePath("/dashboard/tickets");
+    if (ticket.empresaId) {
+      revalidatePath(`/empresa/${ticket.empresaId}/soporte/${ticketId}`);
+      revalidatePath(`/empresa/${ticket.empresaId}/soporte`);
+    }
+  } catch (error) {
+    console.error("[asignarTicket] Error:", error);
+    // Re-lanzar errores de redirect
+    if (error && typeof error === 'object' && 'digest' in error) {
+      throw error;
     }
   }
-
-  revalidatePath(`/dashboard/tickets/${ticketId}`);
-  revalidatePath("/dashboard/tickets");
 }
 
 /**
