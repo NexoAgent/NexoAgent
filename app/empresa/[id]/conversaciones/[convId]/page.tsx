@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { reactivarIA, enviarMensajeHumano, activarModoHumanoFormData } from "@/app/actions/conversaciones";
+import { transferirConversacion } from "@/app/actions/agentes";
 import FormularioRespuesta from "@/app/components/FormularioRespuesta";
 import ChatMessages from "@/app/components/ChatMessages";
 import LoadingButton from "@/app/components/ui/LoadingButton";
@@ -17,11 +18,21 @@ export default async function EmpresaConversacionDetallePage({
     where: { id: convId },
     include: {
       empresa: { select: { nombre: true } },
+      agente: true,
       mensajes: { orderBy: { creadoEn: "asc" } },
     },
   });
 
   if (!conversacion || conversacion.empresaId !== id) notFound();
+
+  // Obtener todos los agentes activos de la empresa para el selector
+  const agentes = await prisma.agente.findMany({
+    where: {
+      empresaId: id,
+      activo: true,
+    },
+    orderBy: { esPrincipal: "desc" },
+  });
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -69,6 +80,69 @@ export default async function EmpresaConversacionDetallePage({
           )}
         </div>
       </div>
+
+      {/* Info del agente asignado */}
+      {conversacion.agente && (
+        <div
+          className="mb-4 rounded-xl px-4 py-3 flex items-center justify-between"
+          style={{
+            background: `${conversacion.agente.color}10`,
+            border: `1px solid ${conversacion.agente.color}40`,
+          }}
+        >
+          <div className="flex items-center gap-3">
+            <div
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold text-sm"
+              style={{ backgroundColor: conversacion.agente.color || "#3B82F6" }}
+            >
+              {conversacion.agente.nombre[0]}
+            </div>
+            <div>
+              <p className="text-sm font-semibold" style={{ color: "#0E2436" }}>
+                {conversacion.agente.nombre}
+              </p>
+              {conversacion.agente.descripcion && (
+                <p className="text-xs" style={{ color: "#73869A" }}>
+                  {conversacion.agente.descripcion}
+                </p>
+              )}
+            </div>
+          </div>
+
+          {agentes.length > 1 && (
+            <details className="relative">
+              <summary className="cursor-pointer text-xs px-3 py-1.5 bg-white hover:bg-gray-50 rounded-lg border border-gray-200 list-none">
+                Transferir
+              </summary>
+              <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 p-2 z-10">
+                <p className="text-xs font-medium text-gray-700 mb-2 px-2">Transferir a:</p>
+                {agentes
+                  .filter((a) => a.id !== conversacion.agenteId)
+                  .map((agente) => (
+                    <form key={agente.id} action={transferirConversacion}>
+                      <input type="hidden" name="empresaId" value={id} />
+                      <input type="hidden" name="conversacionId" value={convId} />
+                      <input type="hidden" name="agenteDestinoId" value={agente.id} />
+                      <input type="hidden" name="motivo" value="Transferencia manual desde UI" />
+                      <button
+                        type="submit"
+                        className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 rounded-lg flex items-center gap-2"
+                      >
+                        <div
+                          className="w-6 h-6 rounded flex items-center justify-center text-white text-xs font-bold"
+                          style={{ backgroundColor: agente.color || "#9333EA" }}
+                        >
+                          {agente.nombre[0]}
+                        </div>
+                        <span className="flex-1">{agente.nombre}</span>
+                      </button>
+                    </form>
+                  ))}
+              </div>
+            </details>
+          )}
+        </div>
+      )}
 
       {conversacion.modoHumano && (
         <div

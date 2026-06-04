@@ -268,3 +268,63 @@ export async function eliminarAgente(formData: FormData) {
     redirect(`/empresa/${empresaId}/agentes?error=Error+al+eliminar+el+agente`);
   }
 }
+
+export async function transferirConversacion(formData: FormData) {
+  try {
+    const session = await auth();
+    if (!session) redirect("/login");
+
+    const empresaId = formData.get("empresaId") as string;
+    const conversacionId = formData.get("conversacionId") as string;
+    const agenteDestinoId = formData.get("agenteDestinoId") as string;
+    const motivo = (formData.get("motivo") as string) || "Transferencia manual";
+
+    // Validar permisos
+    if (session.user.rol === "CLIENTE" && session.user.empresaId !== empresaId) {
+      redirect(`/empresa/${session.user.empresaId}?error=No+autorizado`);
+    }
+
+    const conversacion = await prisma.conversacion.findUnique({
+      where: { id: conversacionId },
+      select: { empresaId: true, agenteId: true },
+    });
+
+    if (!conversacion || conversacion.empresaId !== empresaId) {
+      redirect(`/empresa/${empresaId}/conversaciones?error=Conversación+no+encontrada`);
+    }
+
+    // Verificar que el agente destino existe y pertenece a la empresa
+    const agenteDestino = await prisma.agente.findUnique({
+      where: { id: agenteDestinoId },
+    });
+
+    if (!agenteDestino || agenteDestino.empresaId !== empresaId) {
+      redirect(`/empresa/${empresaId}/conversaciones/${conversacionId}?error=Agente+no+encontrado`);
+    }
+
+    // Crear registro de transferencia
+    await prisma.transferenciaAgente.create({
+      data: {
+        conversacionId,
+        agenteOrigenId: conversacion.agenteId,
+        agenteDestinoId,
+        motivo,
+        aprobada: true,
+      },
+    });
+
+    // Actualizar conversación
+    await prisma.conversacion.update({
+      where: { id: conversacionId },
+      data: { agenteId: agenteDestinoId },
+    });
+
+    redirect(`/empresa/${empresaId}/conversaciones/${conversacionId}?success=Conversación+transferida+correctamente`);
+  } catch (error) {
+    if (isRedirectError(error)) throw error;
+    console.error("[transferirConversacion] Error:", error);
+    const empresaId = formData.get("empresaId") as string;
+    const conversacionId = formData.get("conversacionId") as string;
+    redirect(`/empresa/${empresaId}/conversaciones/${conversacionId}?error=Error+al+transferir+la+conversación`);
+  }
+}

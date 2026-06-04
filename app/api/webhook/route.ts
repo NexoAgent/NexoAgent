@@ -5,6 +5,7 @@ import { evaluarAutomatizaciones } from "@/lib/automatizaciones";
 import { setCredentials, createEvent } from "@/lib/google-calendar";
 import { verificarDisponibilidad, sugerirHorarios } from "@/lib/disponibilidad";
 import { notificarNuevoMensaje, notificarModoHumano, notificarNuevaCita } from "@/lib/push-notifications";
+import { obtenerOAsignarAgente } from "@/lib/agente-router";
 
 const FRASES_HUMANO = [
   "quiero hablar con una persona",
@@ -86,19 +87,26 @@ export async function POST(request: Request) {
     const numeroCliente = from.replace("whatsapp:", "");
     const numeroEmpresa = to.replace("whatsapp:", "");
 
-    const empresa = await prisma.empresa.findFirst({
-      where: { telefonoWhatsapp: numeroEmpresa },
+    // Buscar el número de WhatsApp en la tabla NumeroWhatsApp
+    const numeroWhatsApp = await prisma.numeroWhatsApp.findUnique({
+      where: { telefono: numeroEmpresa },
       include: {
-        documentos: true,
-        memoria: true,
-        automatizaciones: { where: { activa: true } },
+        empresa: {
+          include: {
+            documentos: true,
+            memoria: true,
+            automatizaciones: { where: { activa: true } },
+          },
+        },
       },
     });
 
-    if (!empresa) {
+    if (!numeroWhatsApp || !numeroWhatsApp.empresa) {
       console.log("⚠️ No se encontró empresa para el número:", numeroEmpresa);
       return twiml("Hola, este servicio no está configurado todavía.");
     }
+
+    const empresa = numeroWhatsApp.empresa;
 
     // Busca o crea el contacto en el CRM automáticamente
     let contacto = await prisma.contacto.findUnique({
@@ -111,12 +119,21 @@ export async function POST(request: Request) {
     }
 
     let conversacion = await prisma.conversacion.findFirst({
-      where: { empresaId: empresa.id, numeroCliente },
+      where: {
+        empresaId: empresa.id,
+        numeroCliente,
+        numeroWhatsAppId: numeroWhatsApp.id,
+      },
     });
 
     if (!conversacion) {
       conversacion = await prisma.conversacion.create({
-        data: { empresaId: empresa.id, numeroCliente, contactoId: contacto.id },
+        data: {
+          empresaId: empresa.id,
+          numeroCliente,
+          contactoId: contacto.id,
+          numeroWhatsAppId: numeroWhatsApp.id,
+        },
       });
     }
 
@@ -211,10 +228,18 @@ export async function POST(request: Request) {
 
     const chunksRelevantes = buscarRelevantes(body, todosLosChunks);
 
+    // Obtener o asignar agente a la conversación
+    const agenteData = await obtenerOAsignarAgente(conversacion.id, empresa.id, body);
+
+    // Si no se puede asignar agente, usar prompt del sistema como fallback
+    const promptUtilizar = agenteData?.prompt || empresa.promptSistema || "Eres un asistente virtual amable y profesional.";
+
+    console.log(`🤖 Usando agente ${agenteData?.agenteId || "sistema"} para responder`);
+
     const resultado = await generarRespuesta(
       empresa.nombre,
       historial,
-      empresa.promptSistema,
+      promptUtilizar,
       chunksRelevantes.length > 0
         ? [{ nombre: "Base de conocimiento", contenido: chunksRelevantes.join("\n\n---\n\n") }]
         : empresa.documentos,
