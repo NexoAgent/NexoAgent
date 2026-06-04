@@ -7,6 +7,7 @@ export default auth((req) => {
   const { pathname } = req.nextUrl;
   const isLoggedIn = !!req.auth;
   const userRol = req.auth?.user?.rol;
+  const requiereCambioPassword = req.auth?.user?.requiereCambioPassword;
 
   // Rutas públicas
   if (pathname === "/login" || pathname.startsWith("/api/webhook") || pathname === "/api/health") {
@@ -16,6 +17,16 @@ export default auth((req) => {
   // Redirigir a login si no está autenticado
   if (!isLoggedIn && (pathname.startsWith("/dashboard") || pathname.startsWith("/empresa") || pathname.startsWith("/admin"))) {
     return NextResponse.redirect(new URL("/login", req.url));
+  }
+
+  // Si el usuario requiere cambio de contraseña, redirigir (excepto si ya está en esa página)
+  if (isLoggedIn && requiereCambioPassword && pathname !== "/cambiar-password-obligatorio") {
+    return NextResponse.redirect(new URL("/cambiar-password-obligatorio", req.url));
+  }
+
+  // Si está en la página de cambio obligatorio pero ya no lo requiere, redirigir al dashboard
+  if (isLoggedIn && !requiereCambioPassword && pathname === "/cambiar-password-obligatorio") {
+    return NextResponse.redirect(new URL("/dashboard", req.url));
   }
 
   // Solo PROVEEDOR puede acceder a /admin

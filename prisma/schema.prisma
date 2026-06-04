@@ -13,17 +13,21 @@ model Usuario {
   password           String?    // Opcional para usuarios OAuth
   nombre             String
   rol                RolUsuario @default(CLIENTE)
-  empresaId          String?    @unique
+  empresaId          String?
+  esUsuarioPrincipal Boolean    @default(false) // Indica si es el usuario principal de la empresa
+  requiereCambioPassword Boolean @default(false) // Obliga cambio de contraseña en primer login
   image              String?    // Avatar de Google/OAuth
   emailVerified      DateTime?  // Para NextAuth
   creadoEn           DateTime   @default(now())
   actualizadoEn      DateTime   @updatedAt
-  empresa            Empresa?   @relation("EmpresaUsuario", fields: [empresaId], references: [id])
+  empresa            Empresa?   @relation("EmpresaUsuarios", fields: [empresaId], references: [id])
   accounts           Account[]  // Cuentas OAuth vinculadas
   sessions           Session[]  // Sesiones de NextAuth
   ticketsCreados     Ticket[]   @relation("TicketCreador")
   ticketsAsignados   Ticket[]   @relation("TicketAsignado")
   mensajesTicket     MensajeTicket[]
+
+  @@index([empresaId])
 }
 
 model Empresa {
@@ -67,7 +71,7 @@ model Empresa {
   memoria               MemoriaEmpresa[]
   numerosWhatsApp       NumeroWhatsApp[]
   pushSubscriptions     PushSubscription[]
-  usuario               Usuario?            @relation("EmpresaUsuario")
+  usuarios              Usuario[]           @relation("EmpresaUsuarios")
 }
 
 model NumeroWhatsApp {

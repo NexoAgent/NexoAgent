@@ -1,8 +1,8 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
-import { crearEmpresaConUsuario } from "@/app/actions/admin";
-import PasswordInput from "@/app/components/PasswordInput";
+import { crearEmpresaConUsuarios } from "@/app/actions/admin";
+import FormularioUsuariosEmpresa from "@/app/components/FormularioUsuariosEmpresa";
 
 export default async function NuevaEmpresaPage({
   searchParams,
@@ -63,7 +63,7 @@ export default async function NuevaEmpresaPage({
           </div>
         )}
 
-        <form action={crearEmpresaConUsuario} className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 space-y-6">
+        <form action={crearEmpresaConUsuarios} className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 space-y-6">
           {/* Datos de la empresa */}
           <div className="border-b border-gray-200 pb-6">
             <h2 className="text-lg font-semibold text-gray-900 mb-4">Datos de la empresa</h2>
@@ -200,51 +200,9 @@ export default async function NuevaEmpresaPage({
             </div>
           </div>
 
-          {/* Datos del usuario (opcional) */}
+          {/* Usuarios de la empresa */}
           <div>
-            <h2 className="text-lg font-semibold text-gray-900 mb-2">Usuario de acceso (opcional)</h2>
-            <p className="text-sm text-gray-600 mb-4">Si deseas crear un usuario CLIENTE para esta empresa, completa estos campos</p>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Nombre completo
-                </label>
-                <input
-                  type="text"
-                  name="usuarioNombre"
-                  defaultValue={usuarioNombre}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Ej: Juan Pérez"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Email de acceso
-                </label>
-                <input
-                  type="email"
-                  name="usuarioEmail"
-                  defaultValue={usuarioEmail}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Ej: juan@clinica.com"
-                />
-              </div>
-
-              <div>
-                <PasswordInput
-                  name="usuarioPassword"
-                  label="Contraseña"
-                  placeholder="Mínimo 8 caracteres"
-                  autoComplete="new-password"
-                />
-              </div>
-            </div>
-
-            <p className="text-xs text-gray-500 mt-2">
-              ℹ️ Puedes crear el usuario más tarde desde el panel de administración
-            </p>
+            <FormularioUsuariosEmpresa />
           </div>
 
           {/* Botones */}
