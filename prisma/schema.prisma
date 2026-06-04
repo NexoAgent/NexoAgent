@@ -27,31 +27,45 @@ model Usuario {
 }
 
 model Empresa {
-  id                 String              @id @default(cuid())
-  nombre             String
-  telefonoWhatsapp   String              @unique
-  creadoEn           DateTime            @default(now())
-  actualizadoEn      DateTime            @updatedAt
-  promptSistema      String?
-  calendlyUrl        String?
-  googleAccessToken  String?
-  googleCalendarId   String?
-  googleRefreshToken String?
-  googleTokenExpiry  DateTime?
-  direccion          String?
-  email              String?
-  nif                String?
-  responsable        String?
-  rif                String?
-  telefono           String?
-  automatizaciones   Automatizacion[]
-  citas              Cita[]
-  contactos          Contacto[]
-  conversaciones     Conversacion[]
-  documentos         Documento[]
-  memoria            MemoriaEmpresa[]
-  pushSubscriptions  PushSubscription[]
-  usuario            Usuario?            @relation("EmpresaUsuario")
+  id                    String              @id @default(cuid())
+  nombre                String
+  telefonoWhatsapp      String              @unique
+  creadoEn              DateTime            @default(now())
+  actualizadoEn         DateTime            @updatedAt
+
+  // Plan y suscripción
+  planId                String?
+  plan                  Plan?               @relation(fields: [planId], references: [id])
+  estadoPlan            EstadoPlan          @default(TRIAL)
+  fechaVencimiento      DateTime?
+
+  // Contadores mensuales (resetear cada mes)
+  conversacionesEsteMes Int                 @default(0)
+  ultimoResetContador   DateTime            @default(now())
+
+  // Configuración
+  promptSistema         String?
+  calendlyUrl           String?
+  googleAccessToken     String?
+  googleCalendarId      String?
+  googleRefreshToken    String?
+  googleTokenExpiry     DateTime?
+  direccion             String?
+  email                 String?
+  nif                   String?
+  responsable           String?
+  rif                   String?
+  telefono              String?
+
+  // Relaciones
+  automatizaciones      Automatizacion[]
+  citas                 Cita[]
+  contactos             Contacto[]
+  conversaciones        Conversacion[]
+  documentos            Documento[]
+  memoria               MemoriaEmpresa[]
+  pushSubscriptions     PushSubscription[]
+  usuario               Usuario?            @relation("EmpresaUsuario")
 }
 
 model Cita {
@@ -298,6 +312,43 @@ model MensajeTicket {
 
   @@index([ticketId])
   @@index([usuarioId])
+}
+
+model Plan {
+  id                    String    @id @default(cuid())
+  nombre                String    @unique // "STARTER", "BUSINESS", "CORPORATIVO"
+  descripcion           String?
+  precio                Float     // Precio mensual en USD
+  precioMXN             Float?    // Precio en MXN
+
+  // Límites
+  maxWhatsApps          Int       // 1, 3, 10
+  maxAgentes            Int       // 3, 10, -1 (ilimitado = -1)
+  maxConversacionesMes  Int       // 500, 2000, 10000
+  maxDocumentosMB       Int       // 10, 100, -1 (ilimitado)
+
+  // Features
+  transferenciaAgentes  Boolean   @default(false)
+  ruteoInteligente      Boolean   @default(false)
+  analyticsAvanzados    Boolean   @default(false)
+  apiPersonalizada      Boolean   @default(false)
+  soportePrioritario    Boolean   @default(false)
+  horariosPersonalizados Boolean  @default(false)
+
+  // Orden para mostrar en UI
+  orden                 Int       @default(0)
+  visible               Boolean   @default(true)
+
+  empresas              Empresa[]
+  creadoEn              DateTime  @default(now())
+  actualizadoEn         DateTime  @updatedAt
+}
+
+enum EstadoPlan {
+  TRIAL
+  ACTIVO
+  SUSPENDIDO
+  CANCELADO
 }
 
 enum EstadoTicket {

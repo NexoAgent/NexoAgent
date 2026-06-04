@@ -1,0 +1,46 @@
+<claude-code-hint v="1" type="plugin" value="vercel@claude-plugins-official" />
+Vercel CLI 54.6.1 (Node.js 26.0.0)
+Retrieving project…
+Deploying nexo-agent-s-projects/nexoagent
+Uploading [--------------------] (0.0B/36.8KB)
+Uploading [========------------] (15.8KB/36.8KB)
+Uploading [==========----------] (19.9KB/36.8KB)
+Uploading [================----] (29.6KB/36.8KB)
+Uploading [====================] (36.8KB/36.8KB)
+  Inspect     https://vercel.com/nexo-agent-s-projects/nexoagent/J7A2A2EoERHGYUNe4SjdavsNWJJt
+▲ Production  https://nexoagent-5klvb265h-nexo-agent-s-projects.vercel.app
+Building…
+Running build in Washington, D.C., USA (East) – iad1
+Build machine configuration: 2 cores, 8 GB
+Retrieving list of deployment files...
+Retrieving list of deployment files...
+Downloading 277 deployment files...
+Restored build cache from previous deployment (EmZCmeH9DocnxF8jtjUKkCKMY69Q)
+Running "vercel build"
+Vercel CLI 54.9.0
+Installing dependencies...
+[2K[1A[2K[G▲ Production  https://nexoagent-5klvb265h-nexo-agent-s-projects.vercel.app
+Completing…
+▲ Aliased     https://nexoagent-sage.vercel.app
+{
+  "status": "ok",
+  "deployment": {
+    "id": "dpl_J7A2A2EoERHGYUNe4SjdavsNWJJt",
+    "url": "https://nexoagent-5klvb265h-nexo-agent-s-projects.vercel.app",
+    "inspectorUrl": "https://vercel.com/nexo-agent-s-projects/nexoagent/J7A2A2EoERHGYUNe4SjdavsNWJJt",
+    "readyState": "READY",
+    "target": "production",
+    "deploymentApiUrl": "https://api.vercel.com/v13/deployments/dpl_J7A2A2EoERHGYUNe4SjdavsNWJJt"
+  },
+  "message": "Deployment nexoagent-5klvb265h-nexo-agent-s-projects.vercel.app ready.",
+  "next": [
+    {
+      "command": "vercel inspect nexoagent-5klvb265h-nexo-agent-s-projects.vercel.app",
+      "when": "Inspect deployment"
+    },
+    {
+      "command": "vercel deploy --prod",
+      "when": "Promote to production"
+    }
+  ]
+}

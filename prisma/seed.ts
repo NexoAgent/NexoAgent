@@ -1,35 +1,42 @@
 import { prisma } from "../lib/prisma";
 import bcrypt from "bcryptjs";
+import { seedPlanes } from "./seeds/planes";
 
 async function main() {
-  // Verificar si ya existe el usuario proveedor
+  console.log("🌱 Iniciando seed de la base de datos...\n");
+
+  // 1. Seed de planes
+  await seedPlanes();
+
+  // 2. Verificar si ya existe el usuario proveedor
   const existente = await prisma.usuario.findUnique({
     where: { email: "perofaga@gmail.com" },
   });
 
   if (existente) {
-    console.log("✅ Usuario proveedor ya existe");
-    return;
+    console.log("✅ Usuario proveedor ya existe\n");
+  } else {
+    // Crear usuario proveedor
+    const passwordHash = await bcrypt.hash("nexoagent2026", 10);
+
+    await prisma.usuario.create({
+      data: {
+        email: "perofaga@gmail.com",
+        password: passwordHash,
+        nombre: "Luis Daniel Fajardo Moreno",
+        rol: "PROVEEDOR",
+      },
+    });
+
+    console.log("✅ Usuario proveedor creado:");
+    console.log("   Email: perofaga@gmail.com");
+    console.log("   Password: nexoagent2026");
+    console.log("   Rol: PROVEEDOR");
+    console.log("");
+    console.log("⚠️  IMPORTANTE: Cambia esta contraseña después del primer login\n");
   }
 
-  // Crear usuario proveedor
-  const passwordHash = await bcrypt.hash("nexoagent2026", 10);
-
-  await prisma.usuario.create({
-    data: {
-      email: "perofaga@gmail.com",
-      password: passwordHash,
-      nombre: "Luis Daniel Fajardo Moreno",
-      rol: "PROVEEDOR",
-    },
-  });
-
-  console.log("✅ Usuario proveedor creado:");
-  console.log("   Email: perofaga@gmail.com");
-  console.log("   Password: nexoagent2026");
-  console.log("   Rol: PROVEEDOR");
-  console.log("");
-  console.log("⚠️  IMPORTANTE: Cambia esta contraseña después del primer login");
+  console.log("✅ Seed completado exitosamente");
 }
 
 main()
