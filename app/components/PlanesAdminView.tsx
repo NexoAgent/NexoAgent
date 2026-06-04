@@ -7,7 +7,7 @@ import { CurrencySwitcher, formatPrice, getCurrencyText, type Currency } from ".
 type Plan = {
   id: string;
   nombre: string;
-  descripcion: string;
+  descripcion: string | null;
   precio: number;
   maxWhatsApps: number;
   maxAgentes: number;
