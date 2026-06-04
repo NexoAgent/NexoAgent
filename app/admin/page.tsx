@@ -100,28 +100,22 @@ export default async function AdminPage({
           ) : (
             <>
               {/* Vista de tabla para desktop */}
-              <table className="w-full hidden md:table" style={{ minWidth: "1200px" }}>
+              <table className="w-full hidden md:table">
                 <thead style={{ background: "#FAFCFE" }}>
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: "#73869A" }}>
+                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: "#73869A" }}>
                       Empresa
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: "#73869A" }}>
-                      Responsable
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: "#73869A" }}>
+                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: "#73869A" }}>
                       Contacto
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: "#73869A" }}>
-                      Usuario
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: "#73869A" }}>
+                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: "#73869A" }}>
                       Plan
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: "#73869A" }}>
+                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: "#73869A" }}>
                       Stats
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: "#73869A" }}>
+                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: "#73869A" }}>
                       Acciones
                     </th>
                   </tr>
@@ -129,75 +123,50 @@ export default async function AdminPage({
                 <tbody className="bg-white divide-y" style={{ borderColor: "#F4F7FA" }}>
                 {empresas.map((empresa) => (
                   <tr key={empresa.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center gap-3">
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2">
                         <div
-                          className="w-10 h-10 rounded-lg flex items-center justify-center font-semibold font-sora"
+                          className="w-8 h-8 rounded-lg flex items-center justify-center font-semibold font-sora text-sm flex-shrink-0"
                           style={{ background: "rgba(43,130,240,0.08)", color: "#2B82F0" }}
                         >
                           {empresa.nombre[0]}
                         </div>
-                        <div>
-                          <div className="font-medium text-sm font-sora" style={{ color: "#0E2436" }}>
+                        <div className="min-w-0">
+                          <div className="font-medium text-sm font-sora truncate" style={{ color: "#0E2436" }}>
                             {empresa.nombre}
                           </div>
-                          {empresa.rif && (
-                            <div className="text-xs mt-0.5" style={{ color: "#73869A" }}>
-                              {empresa.rif}
+                          {empresa.responsable && (
+                            <div className="text-xs truncate" style={{ color: "#73869A" }}>
+                              {empresa.responsable}
                             </div>
                           )}
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm" style={{ color: "#0E2436" }}>
-                        {empresa.responsable || "-"}
+                    <td className="px-4 py-3">
+                      <div className="text-xs" style={{ color: "#0E2436" }}>
+                        {empresa.email || empresa.telefonoWhatsapp}
                       </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm" style={{ color: "#0E2436" }}>
-                        {empresa.email || "-"}
-                      </div>
-                      <div className="text-xs mt-0.5" style={{ color: "#73869A" }}>
-                        {empresa.telefonoWhatsapp}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {empresa.usuario ? (
-                        <div>
-                          <div className="text-sm" style={{ color: "#0E2436" }}>
-                            {empresa.usuario.nombre}
-                          </div>
-                          <div className="text-xs mt-0.5" style={{ color: "#73869A" }}>
-                            {empresa.usuario.email}
-                          </div>
+                      {empresa.usuario && (
+                        <div className="text-xs mt-0.5" style={{ color: "#73869A" }}>
+                          👤 {empresa.usuario.nombre}
                         </div>
-                      ) : (
-                        <Link
-                          href={`/admin/empresas/${empresa.id}/usuario`}
-                          className="text-xs hover:underline"
-                          style={{ color: "#2B82F0" }}
-                        >
-                          + Crear usuario
-                        </Link>
                       )}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-4 py-3">
                       {empresa.plan ? (
                         <div>
-                          <div className="text-sm font-medium" style={{ color: "#0E2436" }}>
+                          <div className="text-xs font-medium" style={{ color: "#0E2436" }}>
                             {empresa.plan.nombre}
                           </div>
-                          <div className="text-xs mt-0.5" style={{ color: "#73869A" }}>
-                            <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-                              empresa.estadoPlan === "ACTIVO" ? "bg-green-100 text-green-700" :
-                              empresa.estadoPlan === "TRIAL" ? "bg-blue-100 text-blue-700" :
-                              empresa.estadoPlan === "SUSPENDIDO" ? "bg-yellow-100 text-yellow-700" :
-                              "bg-gray-100 text-gray-700"
-                            }`}>
-                              {empresa.estadoPlan}
-                            </span>
-                          </div>
+                          <span className={`inline-block mt-1 px-1.5 py-0.5 rounded text-[10px] font-medium ${
+                            empresa.estadoPlan === "ACTIVO" ? "bg-green-100 text-green-700" :
+                            empresa.estadoPlan === "TRIAL" ? "bg-blue-100 text-blue-700" :
+                            empresa.estadoPlan === "SUSPENDIDO" ? "bg-yellow-100 text-yellow-700" :
+                            "bg-gray-100 text-gray-700"
+                          }`}>
+                            {empresa.estadoPlan}
+                          </span>
                         </div>
                       ) : (
                         <Link
@@ -205,30 +174,31 @@ export default async function AdminPage({
                           className="text-xs hover:underline"
                           style={{ color: "#2B82F0" }}
                         >
-                          + Asignar plan
+                          + Plan
                         </Link>
                       )}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-xs" style={{ color: "#73869A" }}>
+                    <td className="px-4 py-3 text-xs" style={{ color: "#73869A" }}>
                       <div>{empresa._count.conversaciones} conv</div>
-                      <div>{empresa._count.contactos} contactos</div>
-                      <div>{empresa._count.citas} citas</div>
+                      <div>{empresa._count.contactos} cont</div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-3">
-                      <Link
-                        href={`/empresa/${empresa.id}`}
-                        className="hover:underline"
-                        style={{ color: "#2B82F0" }}
-                      >
-                        Ver
-                      </Link>
-                      <Link
-                        href={`/admin/empresas/${empresa.id}/editar`}
-                        className="hover:underline"
-                        style={{ color: "#73869A" }}
-                      >
-                        Editar
-                      </Link>
+                    <td className="px-4 py-3 text-xs font-medium">
+                      <div className="flex gap-2">
+                        <Link
+                          href={`/empresa/${empresa.id}`}
+                          className="hover:underline"
+                          style={{ color: "#2B82F0" }}
+                        >
+                          Ver
+                        </Link>
+                        <Link
+                          href={`/admin/empresas/${empresa.id}/editar`}
+                          className="hover:underline"
+                          style={{ color: "#73869A" }}
+                        >
+                          Editar
+                        </Link>
+                      </div>
                     </td>
                   </tr>
                 ))}
