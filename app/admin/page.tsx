@@ -19,7 +19,7 @@ export default async function AdminPage({
 
   const empresas = await prisma.empresa.findMany({
     include: {
-      usuarios: true,
+      usuario: true,
       plan: true,
       _count: {
         select: {
@@ -67,7 +67,7 @@ export default async function AdminPage({
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           {[
             { label: "Empresas", valor: empresas.length, color: "#2B82F0" },
-            { label: "Con usuario", valor: empresas.filter((e) => e.usuarios.length > 0).length, color: "#22B26B" },
+            { label: "Con usuario", valor: empresas.filter((e) => e.usuario).length, color: "#22B26B" },
             { label: "Conversaciones", valor: empresas.reduce((acc, e) => acc + e._count.conversaciones, 0), color: "#15B8C9" },
             { label: "Contactos", valor: empresas.reduce((acc, e) => acc + e._count.contactos, 0), color: "#FB923C" },
           ].map((stat) => (
@@ -147,9 +147,9 @@ export default async function AdminPage({
                       <div className="text-xs" style={{ color: "#0E2436" }}>
                         {empresa.email || empresa.telefonoWhatsapp}
                       </div>
-                      {empresa.usuarios && empresa.usuarios.length > 0 && (
+                      {empresa.usuario && (
                         <div className="text-xs mt-0.5" style={{ color: "#73869A" }}>
-                          👤 {empresa.usuarios.find(u => u.esUsuarioPrincipal)?.nombre || empresa.usuarios[0].nombre}
+                          👤 {empresa.usuario.nombre}
                         </div>
                       )}
                     </td>
@@ -266,12 +266,12 @@ export default async function AdminPage({
                         </div>
                       )}
                     </div>
-                    {empresa.usuarios && empresa.usuarios.length > 0 ? (
+                    {empresa.usuario ? (
                       <div>
                         <span className="text-xs font-medium" style={{ color: "#73869A" }}>Usuario: </span>
-                        <span style={{ color: "#0E2436" }}>{empresa.usuarios.find(u => u.esUsuarioPrincipal)?.nombre || empresa.usuarios[0].nombre}</span>
+                        <span style={{ color: "#0E2436" }}>{empresa.usuario.nombre}</span>
                         <div className="text-xs mt-0.5" style={{ color: "#73869A" }}>
-                          {empresa.usuarios.find(u => u.esUsuarioPrincipal)?.email || empresa.usuarios[0].email}
+                          {empresa.usuario.email}
                         </div>
                       </div>
                     ) : (
