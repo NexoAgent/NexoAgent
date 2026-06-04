@@ -487,34 +487,11 @@ export async function obtenerTicket(ticketId: string) {
     const ticket = await prisma.ticket.findUnique({
       where: { id: ticketId },
       include: {
-        creadoPor: {
-          select: {
-            id: true,
-            nombre: true,
-            email: true,
-            image: true,
-            rol: true,
-          },
-        },
-        asignadoA: {
-          select: {
-            id: true,
-            nombre: true,
-            email: true,
-            image: true,
-          },
-        },
+        creadoPor: true,
+        asignadoA: true,
         mensajes: {
           include: {
-            usuario: {
-              select: {
-                id: true,
-                nombre: true,
-                email: true,
-                image: true,
-                rol: true,
-              },
-            },
+            usuario: true,
           },
           orderBy: {
             creadoEn: "asc",
@@ -529,13 +506,21 @@ export async function obtenerTicket(ticketId: string) {
     }
 
     console.log("[obtenerTicket] Ticket encontrado. Mensajes:", ticket.mensajes.length);
+    console.log("[obtenerTicket] Ticket.creadoPorId:", ticket.creadoPorId);
+    console.log("[obtenerTicket] Ticket.empresaId:", ticket.empresaId);
+    console.log("[obtenerTicket] Session.user.id:", session.user.id);
+    console.log("[obtenerTicket] Session.user.empresaId:", session.user.empresaId);
+    console.log("[obtenerTicket] Session.user.rol:", session.user.rol);
 
-    // Verificar permisos
+    // Verificar permisos - más permisivo
     const esCreador = ticket.creadoPorId === session.user.id;
     const esAsignado = ticket.asignadoAId === session.user.id;
     const esProveedor = session.user.rol === "PROVEEDOR";
+    const esDeMismaEmpresa = ticket.empresaId && ticket.empresaId === session.user.empresaId;
 
-    if (!esCreador && !esAsignado && !esProveedor) {
+    console.log("[obtenerTicket] Permisos - esCreador:", esCreador, "esAsignado:", esAsignado, "esProveedor:", esProveedor, "esDeMismaEmpresa:", esDeMismaEmpresa);
+
+    if (!esCreador && !esAsignado && !esProveedor && !esDeMismaEmpresa) {
       console.error("[obtenerTicket] Usuario sin permisos:", session.user.id);
       return null;
     }
