@@ -174,18 +174,23 @@ export async function crearUsuarioCliente(
     throw new Error("No autorizado");
   }
 
-  // Verificar que la empresa exista y no tenga usuario
+  // Verificar que la empresa exista
   const empresa = await prisma.empresa.findUnique({
     where: { id: empresaId },
-    include: { usuario: true },
+    include: {
+      usuarios: {
+        where: { esUsuarioPrincipal: true },
+        take: 1,
+      },
+    },
   });
 
   if (!empresa) {
     throw new Error("Empresa no encontrada");
   }
 
-  if (empresa.usuario) {
-    throw new Error("Esta empresa ya tiene un usuario asignado");
+  if (empresa.usuarios.length > 0) {
+    throw new Error("Esta empresa ya tiene un usuario principal asignado");
   }
 
   // Verificar que el email no exista

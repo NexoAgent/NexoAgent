@@ -21,7 +21,12 @@ export default async function EditarEmpresaPage({
 
   const empresa = await prisma.empresa.findUnique({
     where: { id },
-    include: { usuario: true },
+    include: {
+      usuarios: {
+        where: { esUsuarioPrincipal: true },
+        take: 1,
+      },
+    },
   });
 
   if (!empresa) notFound();
@@ -156,14 +161,14 @@ export default async function EditarEmpresaPage({
             </div>
           </div>
 
-          {/* Info del usuario */}
-          {empresa.usuario && (
+          {/* Info del usuario principal */}
+          {empresa.usuarios[0] && (
             <div className="pt-4 border-t border-gray-200">
-              <h3 className="text-sm font-semibold text-gray-900 mb-2">Usuario asignado</h3>
+              <h3 className="text-sm font-semibold text-gray-900 mb-2">Usuario Principal</h3>
               <div className="text-sm text-gray-600">
-                <p>Nombre: {empresa.usuario.nombre}</p>
-                <p>Email: {empresa.usuario.email}</p>
-                <p>Rol: {empresa.usuario.rol}</p>
+                <p>Nombre: {empresa.usuarios[0].nombre}</p>
+                <p>Email: {empresa.usuarios[0].email}</p>
+                <p>Rol: {empresa.usuarios[0].rol}</p>
               </div>
             </div>
           )}
