@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { asignarPlan } from "@/app/actions/admin";
+import PlanSelector from "@/app/components/PlanSelector";
 
 export default async function AsignarPlanPage({
   params,
@@ -112,61 +113,7 @@ export default async function AsignarPlanPage({
             Seleccionar plan
           </label>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {planes.map((plan) => {
-              const esActual = empresa.planId === plan.id;
-              return (
-                <label
-                  key={plan.id}
-                  className="relative cursor-pointer group block"
-                >
-                  <input
-                    type="radio"
-                    name="planId"
-                    value={plan.id}
-                    defaultChecked={esActual}
-                    required
-                    className="sr-only peer"
-                  />
-                  <div className="rounded-xl p-5 border-2 peer-checked:border-blue-500 peer-checked:bg-blue-50 border-gray-200 bg-white transition-colors">
-                    <div className="flex items-center justify-between mb-3">
-                      <h3 className="font-bold text-lg text-gray-900">{plan.nombre}</h3>
-                      {/* Badge siempre presente, solo cambia visibilidad con opacity */}
-                      <span className={`px-2 py-1 text-xs font-medium rounded transition-opacity ${esActual ? 'bg-blue-100 text-blue-700 opacity-100' : 'bg-gray-100 text-gray-400 opacity-0'}`}>
-                        Seleccionado
-                      </span>
-                    </div>
-
-                    <div className="mb-4">
-                      <p className="text-3xl font-bold text-gray-900">${plan.precio}</p>
-                      <p className="text-sm text-gray-600">USD/mes</p>
-                    </div>
-
-                    <div className="space-y-2 text-sm">
-                      <div className="flex items-center gap-2">
-                        <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
-                        <span>{plan.maxWhatsApps === -1 ? "WhatsApp ilimitados" : `${plan.maxWhatsApps} WhatsApp${plan.maxWhatsApps > 1 ? "s" : ""}`}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
-                        <span>{plan.maxAgentes === -1 ? "Agentes ilimitados" : `${plan.maxAgentes} agentes`}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
-                        <span>{plan.maxConversacionesMes.toLocaleString()} conversaciones/mes</span>
-                      </div>
-                    </div>
-                  </div>
-                </label>
-              );
-            })}
-          </div>
+          <PlanSelector planes={planes} planActualId={empresa.planId} />
         </div>
 
         {/* Estado del plan */}
