@@ -5,8 +5,13 @@ import Link from "next/link";
 import EmptyState from "@/app/components/help/EmptyState";
 import ScrollToTop from "@/app/components/ScrollToTop";
 
-export default async function AdminPage() {
+export default async function AdminPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ success?: string; error?: string }>;
+}) {
   const session = await auth();
+  const { success, error } = await searchParams;
 
   if (!session || session.user.rol !== "PROVEEDOR") {
     redirect("/dashboard");
@@ -15,6 +20,7 @@ export default async function AdminPage() {
   const empresas = await prisma.empresa.findMany({
     include: {
       usuario: true,
+      plan: true,
       _count: {
         select: {
           conversaciones: true,
@@ -28,6 +34,18 @@ export default async function AdminPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
+        {success && (
+          <div className="mb-6 px-4 py-3 bg-green-50 border border-green-200 rounded-lg text-green-700">
+            ✓ {decodeURIComponent(success)}
+          </div>
+        )}
+
+        {error && (
+          <div className="mb-6 px-4 py-3 bg-red-50 border border-red-200 rounded-lg text-red-700">
+            ⚠️ {decodeURIComponent(error)}
+          </div>
+        )}
+
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
           <div>
             <h1 className="text-2xl font-bold font-sora" style={{ color: "#0E2436" }}>
@@ -95,6 +113,9 @@ export default async function AdminPage() {
                       Usuario
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: "#73869A" }}>
+                      Plan
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: "#73869A" }}>
                       Stats
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: "#73869A" }}>
@@ -158,6 +179,33 @@ export default async function AdminPage() {
                         </Link>
                       )}
                     </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {empresa.plan ? (
+                        <div>
+                          <div className="text-sm font-medium" style={{ color: "#0E2436" }}>
+                            {empresa.plan.nombre}
+                          </div>
+                          <div className="text-xs mt-0.5" style={{ color: "#73869A" }}>
+                            <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+                              empresa.estadoPlan === "ACTIVO" ? "bg-green-100 text-green-700" :
+                              empresa.estadoPlan === "TRIAL" ? "bg-blue-100 text-blue-700" :
+                              empresa.estadoPlan === "SUSPENDIDO" ? "bg-yellow-100 text-yellow-700" :
+                              "bg-gray-100 text-gray-700"
+                            }`}>
+                              {empresa.estadoPlan}
+                            </span>
+                          </div>
+                        </div>
+                      ) : (
+                        <Link
+                          href={`/admin/empresas/${empresa.id}/plan`}
+                          className="text-xs hover:underline"
+                          style={{ color: "#2B82F0" }}
+                        >
+                          + Asignar plan
+                        </Link>
+                      )}
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-xs" style={{ color: "#73869A" }}>
                       <div>{empresa._count.conversaciones} conv</div>
                       <div>{empresa._count.contactos} contactos</div>
@@ -211,6 +259,30 @@ export default async function AdminPage() {
                     <div>
                       <span className="text-xs font-medium" style={{ color: "#73869A" }}>Responsable: </span>
                       <span style={{ color: "#0E2436" }}>{empresa.responsable || "-"}</span>
+                    </div>
+                    <div>
+                      <span className="text-xs font-medium" style={{ color: "#73869A" }}>Plan: </span>
+                      {empresa.plan ? (
+                        <>
+                          <span style={{ color: "#0E2436" }}>{empresa.plan.nombre}</span>
+                          <span className={`ml-2 px-2 py-0.5 rounded text-xs font-medium ${
+                            empresa.estadoPlan === "ACTIVO" ? "bg-green-100 text-green-700" :
+                            empresa.estadoPlan === "TRIAL" ? "bg-blue-100 text-blue-700" :
+                            empresa.estadoPlan === "SUSPENDIDO" ? "bg-yellow-100 text-yellow-700" :
+                            "bg-gray-100 text-gray-700"
+                          }`}>
+                            {empresa.estadoPlan}
+                          </span>
+                        </>
+                      ) : (
+                        <Link
+                          href={`/admin/empresas/${empresa.id}/plan`}
+                          className="text-xs hover:underline"
+                          style={{ color: "#2B82F0" }}
+                        >
+                          + Asignar plan
+                        </Link>
+                      )}
                     </div>
                     <div>
                       <span className="text-xs font-medium" style={{ color: "#73869A" }}>Contacto: </span>

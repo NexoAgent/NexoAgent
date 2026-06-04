@@ -175,3 +175,53 @@ export async function crearUsuarioCliente(
 
   redirect(`/admin`);
 }
+
+export async function asignarPlan(formData: FormData) {
+  try {
+    const session = await auth();
+
+    if (!session || session.user.rol !== "PROVEEDOR") {
+      redirect("/admin?error=No+autorizado");
+    }
+
+    const empresaId = formData.get("empresaId") as string;
+    const planId = formData.get("planId") as string;
+    const estadoPlan = formData.get("estadoPlan") as string;
+    const fechaVencimientoStr = formData.get("fechaVencimiento") as string;
+
+    if (!empresaId || !planId) {
+      redirect(`/admin/empresas/${empresaId}/plan?error=Faltan+datos+requeridos`);
+    }
+
+    // Validar que el plan existe
+    const plan = await prisma.plan.findUnique({
+      where: { id: planId },
+    });
+
+    if (!plan) {
+      redirect(`/admin/empresas/${empresaId}/plan?error=Plan+no+encontrado`);
+    }
+
+    // Parsear fecha
+    const fechaVencimiento = fechaVencimientoStr
+      ? new Date(fechaVencimientoStr)
+      : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 días por defecto
+
+    // Actualizar empresa
+    await prisma.empresa.update({
+      where: { id: empresaId },
+      data: {
+        planId,
+        estadoPlan: estadoPlan as any,
+        fechaVencimiento,
+      },
+    });
+
+    redirect(`/admin?success=Plan+asignado+correctamente`);
+  } catch (error) {
+    if (isRedirectError(error)) throw error;
+    console.error("[asignarPlan] Error:", error);
+    const empresaId = formData.get("empresaId") as string;
+    redirect(`/admin/empresas/${empresaId}/plan?error=Error+al+asignar+el+plan`);
+  }
+}
