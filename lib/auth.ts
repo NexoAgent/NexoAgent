@@ -51,7 +51,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           name: usuario.nombre,
           rol: usuario.rol,
           empresaId: usuario.empresaId,
-          requiereCambioPassword: usuario.requiereCambioPassword,
+          requiereCambioPassword: usuario.requiereCambioPassword ?? undefined,
         };
       },
     }),
@@ -95,7 +95,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           token.rol = dbUser.rol;
           token.empresaId = dbUser.empresaId;
           token.nombre = dbUser.nombre;
-          token.requiereCambioPassword = dbUser.requiereCambioPassword;
+          token.requiereCambioPassword = dbUser.requiereCambioPassword ?? undefined;
         }
       }
       return token;
