@@ -475,67 +475,81 @@ export async function obtenerMisTickets() {
  * Obtener detalle de un ticket
  */
 export async function obtenerTicket(ticketId: string) {
-  const session = await auth();
-  if (!session?.user) {
-    return null;
-  }
+  try {
+    const session = await auth();
+    if (!session?.user) {
+      console.error("[obtenerTicket] No hay sesión");
+      return null;
+    }
 
-  const ticket = await prisma.ticket.findUnique({
-    where: { id: ticketId },
-    include: {
-      creadoPor: {
-        select: {
-          id: true,
-          nombre: true,
-          email: true,
-          image: true,
-          rol: true,
-        },
-      },
-      asignadoA: {
-        select: {
-          id: true,
-          nombre: true,
-          email: true,
-          image: true,
-        },
-      },
-      mensajes: {
-        include: {
-          usuario: {
-            select: {
-              id: true,
-              nombre: true,
-              email: true,
-              image: true,
-              rol: true,
-            },
+    console.log("[obtenerTicket] Buscando ticket:", ticketId, "para usuario:", session.user.id);
+
+    const ticket = await prisma.ticket.findUnique({
+      where: { id: ticketId },
+      include: {
+        creadoPor: {
+          select: {
+            id: true,
+            nombre: true,
+            email: true,
+            image: true,
+            rol: true,
           },
         },
-        orderBy: {
-          creadoEn: "asc",
+        asignadoA: {
+          select: {
+            id: true,
+            nombre: true,
+            email: true,
+            image: true,
+          },
+        },
+        mensajes: {
+          include: {
+            usuario: {
+              select: {
+                id: true,
+                nombre: true,
+                email: true,
+                image: true,
+                rol: true,
+              },
+            },
+          },
+          orderBy: {
+            creadoEn: "asc",
+          },
         },
       },
-    },
-  });
+    });
 
-  if (!ticket) {
+    if (!ticket) {
+      console.error("[obtenerTicket] Ticket no encontrado:", ticketId);
+      return null;
+    }
+
+    console.log("[obtenerTicket] Ticket encontrado. Mensajes:", ticket.mensajes.length);
+
+    // Verificar permisos
+    const esCreador = ticket.creadoPorId === session.user.id;
+    const esAsignado = ticket.asignadoAId === session.user.id;
+    const esProveedor = session.user.rol === "PROVEEDOR";
+
+    if (!esCreador && !esAsignado && !esProveedor) {
+      console.error("[obtenerTicket] Usuario sin permisos:", session.user.id);
+      return null;
+    }
+
+    // Filtrar mensajes internos si es cliente
+    if (session.user.rol === "CLIENTE") {
+      ticket.mensajes = ticket.mensajes.filter((m) => !m.esInterno);
+    }
+
+    console.log("[obtenerTicket] Ticket retornado exitosamente");
+    return ticket;
+  } catch (error) {
+    console.error("[obtenerTicket] Error completo:", error);
+    console.error("[obtenerTicket] Stack:", error instanceof Error ? error.stack : "No stack");
     return null;
   }
-
-  // Verificar permisos
-  const esCreador = ticket.creadoPorId === session.user.id;
-  const esAsignado = ticket.asignadoAId === session.user.id;
-  const esProveedor = session.user.rol === "PROVEEDOR";
-
-  if (!esCreador && !esAsignado && !esProveedor) {
-    return null;
-  }
-
-  // Filtrar mensajes internos si es cliente
-  if (session.user.rol === "CLIENTE") {
-    ticket.mensajes = ticket.mensajes.filter((m) => !m.esInterno);
-  }
-
-  return ticket;
 }
