@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { crearUsuarioProveedor, cambiarContrasena, eliminarUsuario } from "@/app/actions/usuarios";
 import DeleteUserButton from "./DeleteUserButton";
+import PasswordInput from "@/app/components/PasswordInput";
 
 export default async function UsuariosPage({
   searchParams,
@@ -97,19 +98,13 @@ export default async function UsuariosPage({
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Contraseña *
-                </label>
-                <input
-                  type="password"
-                  name="password"
-                  required
-                  minLength={8}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Mínimo 8 caracteres"
-                />
-              </div>
+              <PasswordInput
+                name="password"
+                label="Contraseña"
+                placeholder="Mínimo 8 caracteres"
+                required
+                autoComplete="new-password"
+              />
 
               <button
                 type="submit"
@@ -126,44 +121,29 @@ export default async function UsuariosPage({
             <form action={cambiarContrasena} className="space-y-4">
               <input type="hidden" name="usuarioId" value={session.user.id} />
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Contraseña actual *
-                </label>
-                <input
-                  type="password"
-                  name="passwordActual"
-                  required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
+              <PasswordInput
+                name="passwordActual"
+                label="Contraseña actual"
+                placeholder="Tu contraseña actual"
+                required
+                autoComplete="current-password"
+              />
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Nueva contraseña *
-                </label>
-                <input
-                  type="password"
-                  name="passwordNueva"
-                  required
-                  minLength={8}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Mínimo 8 caracteres"
-                />
-              </div>
+              <PasswordInput
+                name="passwordNueva"
+                label="Nueva contraseña"
+                placeholder="Mínimo 8 caracteres"
+                required
+                autoComplete="new-password"
+              />
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Confirmar nueva contraseña *
-                </label>
-                <input
-                  type="password"
-                  name="passwordConfirmar"
-                  required
-                  minLength={8}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
+              <PasswordInput
+                name="passwordConfirmar"
+                label="Confirmar nueva contraseña"
+                placeholder="Repite la nueva contraseña"
+                required
+                autoComplete="new-password"
+              />
 
               <button
                 type="submit"
