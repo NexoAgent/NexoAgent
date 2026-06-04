@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { CurrencySwitcher, useCurrency, formatPrice, getCurrencyText, type Currency } from "./CurrencySwitcher";
 
 interface Plan {
   id: string;
@@ -18,23 +19,30 @@ interface PlanSelectorProps {
 
 export default function PlanSelector({ planes, planActualId }: PlanSelectorProps) {
   const [seleccionado, setSeleccionado] = useState(planActualId);
+  const [currency, setCurrency] = useState<Currency>("USD");
 
   return (
-    <div
-      className="plan-grid"
-      style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(1, 1fr)',
-        gap: '16px'
-      }}
-    >
-      <style jsx>{`
-        @media (min-width: 768px) {
-          .plan-grid {
-            grid-template-columns: repeat(3, 1fr) !important;
+    <>
+      {/* Currency Switcher */}
+      <div className="mb-6 flex justify-end">
+        <CurrencySwitcher onChange={(curr) => setCurrency(curr)} />
+      </div>
+
+      <div
+        className="plan-grid"
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(1, 1fr)',
+          gap: '16px'
+        }}
+      >
+        <style jsx>{`
+          @media (min-width: 768px) {
+            .plan-grid {
+              grid-template-columns: repeat(3, 1fr) !important;
+            }
           }
-        }
-      `}</style>
+        `}</style>
       {planes.map((plan) => {
         const isSelected = seleccionado === plan.id;
         return (
@@ -97,10 +105,10 @@ export default function PlanSelector({ planes, planActualId }: PlanSelectorProps
 
               <div style={{ marginBottom: '16px' }}>
                 <p style={{ fontSize: '28px', fontWeight: 700, color: '#111827', lineHeight: '1' }}>
-                  ${plan.precio}
+                  {formatPrice(plan.precio, currency)}
                 </p>
                 <p style={{ fontSize: '13px', color: '#6B7280', marginTop: '3px' }}>
-                  USD/mes
+                  {getCurrencyText(currency)}
                 </p>
               </div>
 
@@ -138,6 +146,7 @@ export default function PlanSelector({ planes, planActualId }: PlanSelectorProps
           </div>
         );
       })}
-    </div>
+      </div>
+    </>
   );
 }
