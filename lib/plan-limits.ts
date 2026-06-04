@@ -105,10 +105,13 @@ async function checkAgentesLimit(
   empresa: Empresa,
   plan: Plan
 ): Promise<LimitCheck> {
-  // Contar agentes actuales
-  // NOTA: Por ahora no existe tabla Agente
-  // Cuando la implementes: const current = await prisma.agente.count({ where: { empresaId: empresa.id } });
-  const current = 0; // Temporal
+  // Contar agentes activos
+  const current = await prisma.agente.count({
+    where: {
+      empresaId: empresa.id,
+      activo: true,
+    },
+  });
 
   const max = plan.maxAgentes;
   const ilimitado = max === -1;

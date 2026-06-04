@@ -58,6 +58,7 @@ model Empresa {
   telefono              String?
 
   // Relaciones
+  agentes               Agente[]
   automatizaciones      Automatizacion[]
   citas                 Cita[]
   contactos             Contacto[]
@@ -85,6 +86,53 @@ model NumeroWhatsApp {
 
   @@index([empresaId])
   @@index([telefono])
+}
+
+model Agente {
+  id                String          @id @default(cuid())
+  empresaId         String
+  nombre            String          // Ej: "Atención al Cliente", "Ventas", "Soporte Técnico"
+  descripcion       String?         // Breve descripción del agente
+  prompt            String          // Prompt personalizado del agente
+  activo            Boolean         @default(true)
+  color             String?         // Color en hex para UI (ej: "#3B82F6")
+
+  // Configuración de ruteo
+  esPrincipal       Boolean         @default(false) // Agente por defecto
+  palabrasClave     String[]        // Keywords para ruteo automático
+  horarioInicio     String?         // Ej: "09:00"
+  horarioFin        String?         // Ej: "18:00"
+  diasSemana        Int[]           // 0=Domingo, 1=Lunes, ... 6=Sábado
+
+  creadoEn          DateTime        @default(now())
+  actualizadoEn     DateTime        @updatedAt
+
+  // Relaciones
+  empresa           Empresa         @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  conversaciones    Conversacion[]
+  transferenciasOrigen TransferenciaAgente[] @relation("TransferenciaOrigen")
+  transferenciasDestino TransferenciaAgente[] @relation("TransferenciaDestino")
+
+  @@index([empresaId])
+  @@index([activo])
+}
+
+model TransferenciaAgente {
+  id                String       @id @default(cuid())
+  conversacionId    String
+  agenteOrigenId    String?      // Null si viene del sistema general
+  agenteDestinoId   String
+  motivo            String?      // Razón de la transferencia
+  aprobada          Boolean      @default(false)
+  creadoEn          DateTime     @default(now())
+
+  conversacion      Conversacion @relation(fields: [conversacionId], references: [id], onDelete: Cascade)
+  agenteOrigen      Agente?      @relation("TransferenciaOrigen", fields: [agenteOrigenId], references: [id])
+  agenteDestino     Agente       @relation("TransferenciaDestino", fields: [agenteDestinoId], references: [id])
+
+  @@index([conversacionId])
+  @@index([agenteOrigenId])
+  @@index([agenteDestinoId])
 }
 
 model Cita {
@@ -147,21 +195,25 @@ model Contacto {
 }
 
 model Conversacion {
-  id               String           @id @default(cuid())
+  id               String                  @id @default(cuid())
   empresaId        String
   numeroCliente    String
-  numeroWhatsAppId String?          // Nullable para migrar datos existentes
-  estado           Estado           @default(ACTIVA)
-  creadoEn         DateTime         @default(now())
-  actualizadoEn    DateTime         @updatedAt
-  modoHumano       Boolean          @default(false)
+  numeroWhatsAppId String?                 // Nullable para migrar datos existentes
+  agenteId         String?                 // Agente asignado a esta conversación
+  estado           Estado                  @default(ACTIVA)
+  creadoEn         DateTime                @default(now())
+  actualizadoEn    DateTime                @updatedAt
+  modoHumano       Boolean                 @default(false)
   contactoId       String?
-  contacto         Contacto?        @relation(fields: [contactoId], references: [id])
-  empresa          Empresa          @relation(fields: [empresaId], references: [id])
-  numeroWhatsApp   NumeroWhatsApp?  @relation(fields: [numeroWhatsAppId], references: [id])
+  contacto         Contacto?               @relation(fields: [contactoId], references: [id])
+  empresa          Empresa                 @relation(fields: [empresaId], references: [id])
+  numeroWhatsApp   NumeroWhatsApp?         @relation(fields: [numeroWhatsAppId], references: [id])
+  agente           Agente?                 @relation(fields: [agenteId], references: [id])
   mensajes         Mensaje[]
+  transferencias   TransferenciaAgente[]
 
   @@index([numeroWhatsAppId])
+  @@index([agenteId])
 }
 
 model Mensaje {
