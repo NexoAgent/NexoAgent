@@ -5,14 +5,14 @@ import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import bcrypt from "bcryptjs";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
+import { logger } from "@/lib/logger";
 
 export async function crearEmpresaConUsuario(formData: FormData) {
-  console.log("[crearEmpresaConUsuario] Iniciando...");
+  logger.debug("[crearEmpresaConUsuario] Iniciando...");
 
   try {
-    console.log("[crearEmpresaConUsuario] Verificando sesión...");
     const session = await auth();
-    console.log("[crearEmpresaConUsuario] Sesión:", session?.user?.email, session?.user?.rol);
+    logger.debug("[crearEmpresaConUsuario] Sesión:", session?.user?.email, session?.user?.rol);
 
     if (!session || session.user.rol !== "PROVEEDOR") {
       redirect("/admin/empresas/nueva?error=No+autorizado");
@@ -108,7 +108,7 @@ export async function crearEmpresaConUsuario(formData: FormData) {
     }
 
     // Crear empresa
-    console.log("[crearEmpresaConUsuario] Creando empresa:", { nombre, telefonoWhatsapp, planId });
+    logger.debug("[crearEmpresaConUsuario] Creando empresa:", { nombre, telefonoWhatsapp, planId });
 
     // Calcular fecha de vencimiento (14 días para trial)
     const fechaVencimiento = new Date();
@@ -132,7 +132,7 @@ export async function crearEmpresaConUsuario(formData: FormData) {
 
     // Si se proveen datos de usuario, crear el usuario CLIENTE
     if (usuarioNombre && usuarioEmail && usuarioPassword) {
-      console.log("[crearEmpresaConUsuario] Creando usuario CLIENTE...");
+      logger.debug("[crearEmpresaConUsuario] Creando usuario CLIENTE...");
       const passwordHash = await bcrypt.hash(usuarioPassword, 10);
 
       await prisma.usuario.create({
@@ -146,7 +146,7 @@ export async function crearEmpresaConUsuario(formData: FormData) {
       });
     }
 
-    console.log("[crearEmpresaConUsuario] Empresa creada exitosamente:", empresa.id);
+    logger.debug("[crearEmpresaConUsuario] Empresa creada exitosamente:", empresa.id);
     redirect(`/admin?creada=true`);
   } catch (error) {
     if (isRedirectError(error)) throw error;
@@ -155,8 +155,8 @@ export async function crearEmpresaConUsuario(formData: FormData) {
       throw error;
     }
 
-    console.error("[crearEmpresaConUsuario] Error completo:", error);
-    console.error("[crearEmpresaConUsuario] Stack:", error instanceof Error ? error.stack : "No stack");
+    logger.error("[crearEmpresaConUsuario] Error completo:", error);
+    logger.error("[crearEmpresaConUsuario] Stack:", error instanceof Error ? error.stack : "No stack");
     const mensaje = error instanceof Error ? error.message : "Error+desconocido";
     redirect(`/admin/empresas/nueva?error=${encodeURIComponent(mensaje)}`);
   }
@@ -261,7 +261,7 @@ export async function asignarPlan(formData: FormData) {
     redirect(`/admin?success=Plan+asignado+correctamente`);
   } catch (error) {
     if (isRedirectError(error)) throw error;
-    console.error("[asignarPlan] Error:", error);
+    logger.error("[asignarPlan] Error:", error);
     const empresaId = formData.get("empresaId") as string;
     redirect(`/admin/empresas/${empresaId}/plan?error=Error+al+asignar+el+plan`);
   }

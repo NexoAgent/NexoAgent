@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { logger } from "@/lib/logger";
 import {
   enviarEmailNuevoTicket,
   enviarEmailRespuestaTicket,
@@ -77,7 +78,7 @@ export async function crearTicketPublico(formData: FormData) {
       creadoPor: `${nombre} (${email})`,
       destinatarioEmail: proveedor.email,
       destinatarioNombre: proveedor.nombre,
-    }).catch((err) => console.error("Error enviando email:", err));
+    }).catch((err) => logger.error("Error enviando email:", err));
   }
 
   redirect("/contacto?success=true");
@@ -142,7 +143,7 @@ export async function crearTicket(formData: FormData) {
         creadoPor: session.user.name || session.user.email || "Usuario",
         destinatarioEmail: proveedor.email,
         destinatarioNombre: proveedor.nombre,
-      }).catch((err) => console.error("Error enviando email:", err));
+      }).catch((err) => logger.error("Error enviando email:", err));
     }
 
     // Revalidar rutas
@@ -158,7 +159,7 @@ export async function crearTicket(formData: FormData) {
 
     redirect(redirectPath);
   } catch (error) {
-    console.error("[crearTicket] Error:", error);
+    logger.error("[crearTicket] Error:", error);
     // Re-lanzar errores de redirect
     if (error && typeof error === 'object' && 'digest' in error) {
       throw error;
@@ -252,7 +253,7 @@ export async function agregarMensajeTicket(formData: FormData) {
         destinatarioEmail: destinatario.email,
         destinatarioNombre: destinatario.nombre,
         esInterno: esInternoFinal,
-      }).catch((err) => console.error("Error enviando email:", err));
+      }).catch((err) => logger.error("Error enviando email:", err));
     }
 
     // Revalidar ambas rutas
@@ -261,7 +262,7 @@ export async function agregarMensajeTicket(formData: FormData) {
       revalidatePath(`/empresa/${ticket.empresaId}/soporte/${ticketId}`);
     }
   } catch (error) {
-    console.error("[agregarMensajeTicket] Error:", error);
+    logger.error("[agregarMensajeTicket] Error:", error);
     // Re-lanzar errores de redirect
     if (error && typeof error === 'object' && 'digest' in error) {
       throw error;
@@ -325,7 +326,7 @@ export async function actualizarEstadoTicket(formData: FormData) {
         cambiadoPor: session.user.name || session.user.email || "Usuario",
         destinatarioEmail: ticket.creadoPor.email,
         destinatarioNombre: ticket.creadoPor.nombre,
-      }).catch((err) => console.error("Error enviando email:", err));
+      }).catch((err) => logger.error("Error enviando email:", err));
     }
 
     // Revalidar ambas rutas
@@ -336,7 +337,7 @@ export async function actualizarEstadoTicket(formData: FormData) {
       revalidatePath(`/empresa/${ticket.empresaId}/soporte`);
     }
   } catch (error) {
-    console.error("[actualizarEstadoTicket] Error:", error);
+    logger.error("[actualizarEstadoTicket] Error:", error);
     // Re-lanzar errores de redirect
     if (error && typeof error === 'object' && 'digest' in error) {
       throw error;
@@ -396,7 +397,7 @@ export async function asignarTicket(formData: FormData) {
           asignadoPor: session.user.name || session.user.email || "Usuario",
           destinatarioEmail: nuevoAsignado.email,
           destinatarioNombre: nuevoAsignado.nombre,
-        }).catch((err) => console.error("Error enviando email:", err));
+        }).catch((err) => logger.error("Error enviando email:", err));
       }
     }
 
@@ -408,7 +409,7 @@ export async function asignarTicket(formData: FormData) {
       revalidatePath(`/empresa/${ticket.empresaId}/soporte`);
     }
   } catch (error) {
-    console.error("[asignarTicket] Error:", error);
+    logger.error("[asignarTicket] Error:", error);
     // Re-lanzar errores de redirect
     if (error && typeof error === 'object' && 'digest' in error) {
       throw error;
@@ -478,7 +479,7 @@ export async function obtenerTicket(ticketId: string) {
   try {
     const session = await auth();
     if (!session?.user) {
-      console.error("[obtenerTicket] No hay sesión");
+      logger.error("[obtenerTicket] No hay sesión");
       return null;
     }
 
@@ -499,7 +500,7 @@ export async function obtenerTicket(ticketId: string) {
     });
 
     if (!ticket) {
-      console.error("[obtenerTicket] Ticket no encontrado:", ticketId);
+      logger.error("[obtenerTicket] Ticket no encontrado:", ticketId);
       return null;
     }
 
@@ -511,7 +512,7 @@ export async function obtenerTicket(ticketId: string) {
 
     // Validar permisos: solo puede ver el ticket si es creador, asignado, proveedor o de la misma empresa
     if (!esCreador && !esAsignado && !esProveedor && !esDeMismaEmpresa) {
-      console.error("[obtenerTicket] Usuario sin permisos:", session.user.id, "para ticket:", ticketId);
+      logger.error("[obtenerTicket] Usuario sin permisos:", session.user.id, "para ticket:", ticketId);
       return null;
     }
 
@@ -522,8 +523,8 @@ export async function obtenerTicket(ticketId: string) {
 
     return ticket;
   } catch (error) {
-    console.error("[obtenerTicket] Error completo:", error);
-    console.error("[obtenerTicket] Stack:", error instanceof Error ? error.stack : "No stack");
+    logger.error("[obtenerTicket] Error completo:", error);
+    logger.error("[obtenerTicket] Stack:", error instanceof Error ? error.stack : "No stack");
     return null;
   }
 }

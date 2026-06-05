@@ -6,6 +6,8 @@ import { setCredentials, createEvent } from "@/lib/google-calendar";
 import { verificarDisponibilidad, sugerirHorarios } from "@/lib/disponibilidad";
 import { notificarNuevoMensaje, notificarModoHumano, notificarNuevaCita } from "@/lib/push-notifications";
 import { obtenerOAsignarAgente } from "@/lib/agente-router";
+import { logger } from "@/lib/logger";
+import { rateLimitMiddleware } from "@/lib/rate-limiter";
 
 const FRASES_HUMANO = [
   "quiero hablar con una persona",
@@ -64,7 +66,7 @@ export async function GET(request: Request) {
   // Validar que el token de verificación esté configurado
   const verifyToken = process.env.WHATSAPP_VERIFY_TOKEN;
   if (!verifyToken) {
-    console.error("[webhook] WHATSAPP_VERIFY_TOKEN no configurado");
+    logger.error("[webhook] WHATSAPP_VERIFY_TOKEN no configurado");
     return new Response("Configuración incompleta", { status: 500 });
   }
 
@@ -75,6 +77,21 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  // Rate limiting: 100 requests por minuto por IP
+  const ip = request.headers.get("x-forwarded-for")?.split(",")[0] ||
+             request.headers.get("x-real-ip") ||
+             "unknown";
+
+  const rateLimit = await rateLimitMiddleware(ip, {
+    limit: 100,
+    windowSeconds: 60,
+  });
+
+  if (!rateLimit.allowed) {
+    logger.warn("[webhook] Rate limit excedido para IP:", ip);
+    return rateLimit.response!;
+  }
+
   try {
     const formData = await request.formData();
     const body = formData.get("Body") as string;
@@ -88,7 +105,7 @@ export async function POST(request: Request) {
       });
     }
 
-    console.log(`📨 Mensaje de ${from}: ${body}`);
+    logger.info(`📨 Mensaje de ${from}: ${body}`);
 
     const numeroCliente = from.replace("whatsapp:", "");
     const numeroEmpresa = to.replace("whatsapp:", "");
@@ -108,7 +125,7 @@ export async function POST(request: Request) {
     });
 
     if (!numeroWhatsApp || !numeroWhatsApp.empresa) {
-      console.log("⚠️ No se encontró empresa para el número:", numeroEmpresa);
+      logger.info("⚠️ No se encontró empresa para el número:", numeroEmpresa);
       return twiml("Hola, este servicio no está configurado todavía.");
     }
 
@@ -152,20 +169,20 @@ export async function POST(request: Request) {
     });
 
     // Notificar nuevo mensaje
-    console.log(`📬 Enviando notificación de nuevo mensaje para empresa ${empresa.id}`);
+    logger.info(`📬 Enviando notificación de nuevo mensaje para empresa ${empresa.id}`);
     try {
       await notificarNuevoMensaje(empresa.id, conversacion.id, numeroCliente, body);
-      console.log(`✅ Notificación de mensaje enviada`);
+      logger.info(`✅ Notificación de mensaje enviada`);
     } catch (error) {
-      console.error("❌ Error al enviar notificación de nuevo mensaje:", error);
+      logger.error("❌ Error al enviar notificación de nuevo mensaje:", error);
     }
 
     // Verificar si solicita modo humano
     const activaModoHumano = solicitaHumano(body);
-    console.log(`🤔 ¿Solicita modo humano? ${activaModoHumano} para mensaje: "${body}"`);
+    logger.info(`🤔 ¿Solicita modo humano? ${activaModoHumano} para mensaje: "${body}"`);
 
     if (activaModoHumano) {
-      console.log(`🚨 ACTIVANDO MODO HUMANO para conversación ${conversacion.id}`);
+      logger.info(`🚨 ACTIVANDO MODO HUMANO para conversación ${conversacion.id}`);
 
       await prisma.conversacion.update({
         where: { id: conversacion.id },
@@ -173,12 +190,12 @@ export async function POST(request: Request) {
       });
 
       // Notificar activación de modo humano
-      console.log(`🔔 Enviando notificación URGENTE de modo humano`);
+      logger.info(`🔔 Enviando notificación URGENTE de modo humano`);
       try {
         await notificarModoHumano(empresa.id, conversacion.id, numeroCliente);
-        console.log(`✅ Notificación de modo humano enviada`);
+        logger.info(`✅ Notificación de modo humano enviada`);
       } catch (error) {
-        console.error("❌ Error al enviar notificación de modo humano:", error);
+        logger.error("❌ Error al enviar notificación de modo humano:", error);
       }
 
       return twiml(
@@ -240,7 +257,7 @@ export async function POST(request: Request) {
     // Si no se puede asignar agente, usar prompt del sistema como fallback
     const promptUtilizar = agenteData?.prompt || empresa.promptSistema || "Eres un asistente virtual amable y profesional.";
 
-    console.log(`🤖 Usando agente ${agenteData?.agenteId || "sistema"} para responder`);
+    logger.info(`🤖 Usando agente ${agenteData?.agenteId || "sistema"} para responder`);
 
     const resultado = await generarRespuesta(
       empresa.nombre,
@@ -342,7 +359,7 @@ export async function POST(request: Request) {
           },
         });
 
-        console.log(`⚠️ Cita rechazada por conflicto: ${fecha} ${hora}`);
+        logger.info(`⚠️ Cita rechazada por conflicto: ${fecha} ${hora}`);
         return twiml(respuestaConflicto);
       }
 
@@ -380,9 +397,9 @@ export async function POST(request: Request) {
           });
           googleEventId = event.id;
           googleCalendarLink = event.link;
-          console.log(`✅ Evento creado en Google Calendar: ${event.link}`);
+          logger.info(`✅ Evento creado en Google Calendar: ${event.link}`);
         } catch (error) {
-          console.error("Error creando evento en Google Calendar:", error);
+          logger.error("Error creando evento en Google Calendar:", error);
         }
       }
 
@@ -405,10 +422,10 @@ export async function POST(request: Request) {
       try {
         await notificarNuevaCita(empresa.id, citaCreada.id, nombreCliente, fechaHora);
       } catch (error) {
-        console.error("Error al enviar notificación de nueva cita:", error);
+        logger.error("Error al enviar notificación de nueva cita:", error);
       }
 
-      console.log(`📅 Cita creada automáticamente: ${nombreCliente} - ${fecha} ${hora}`);
+      logger.info(`📅 Cita creada automáticamente: ${nombreCliente} - ${fecha} ${hora}`);
     }
 
     await prisma.mensaje.create({
@@ -419,11 +436,11 @@ export async function POST(request: Request) {
       },
     });
 
-    console.log(`🤖 Respuesta IA: ${resultado.respuesta}`);
+    logger.info(`🤖 Respuesta IA: ${resultado.respuesta}`);
 
     return twiml(resultado.respuesta);
   } catch (error) {
-    console.error("Error en webhook:", error);
+    logger.error("Error en webhook:", error);
     return twiml("Lo siento, ocurrió un error. Intenta de nuevo.");
   }
 }
