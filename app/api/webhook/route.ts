@@ -60,7 +60,13 @@ export async function GET(request: Request) {
   const mode = url.searchParams.get("hub.mode");
   const token = url.searchParams.get("hub.verify_token");
   const challenge = url.searchParams.get("hub.challenge");
-  const verifyToken = process.env.WHATSAPP_VERIFY_TOKEN ?? "nexoagent_token";
+
+  // Validar que el token de verificación esté configurado
+  const verifyToken = process.env.WHATSAPP_VERIFY_TOKEN;
+  if (!verifyToken) {
+    console.error("[webhook] WHATSAPP_VERIFY_TOKEN no configurado");
+    return new Response("Configuración incompleta", { status: 500 });
+  }
 
   if (mode === "subscribe" && token === verifyToken) {
     return new Response(challenge, { status: 200 });

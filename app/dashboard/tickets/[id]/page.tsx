@@ -59,16 +59,11 @@ export default async function TicketDetailPage({
     redirect("/login");
   }
 
-  console.log("🎫 DASHBOARD/TICKETS - Buscando ticket:", ticketId, "Usuario:", session.user.id, "Rol:", session.user.rol);
-
   const ticket = await obtenerTicket(ticketId);
 
   if (!ticket) {
-    console.error("❌ DASHBOARD/TICKETS - Ticket no encontrado:", ticketId);
     redirect("/dashboard/tickets?error=No+tienes+permisos+o+el+ticket+no+existe");
   }
-
-  console.log("✅ DASHBOARD/TICKETS - Ticket cargado:", ticket.id);
 
   // Obtener usuarios proveedores para asignar (solo si es proveedor)
   let proveedores: any[] = [];

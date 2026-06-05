@@ -482,8 +482,6 @@ export async function obtenerTicket(ticketId: string) {
       return null;
     }
 
-    console.log("[obtenerTicket] Buscando ticket:", ticketId, "para usuario:", session.user.id);
-
     const ticket = await prisma.ticket.findUnique({
       where: { id: ticketId },
       include: {
@@ -505,36 +503,23 @@ export async function obtenerTicket(ticketId: string) {
       return null;
     }
 
-    console.log("[obtenerTicket] Ticket encontrado. Mensajes:", ticket.mensajes.length);
-    console.log("[obtenerTicket] Ticket.creadoPorId:", ticket.creadoPorId);
-    console.log("[obtenerTicket] Ticket.empresaId:", ticket.empresaId);
-    console.log("[obtenerTicket] Session.user.id:", session.user.id);
-    console.log("[obtenerTicket] Session.user.empresaId:", session.user.empresaId);
-    console.log("[obtenerTicket] Session.user.rol:", session.user.rol);
-
-    // Verificar permisos - más permisivo
+    // Verificar permisos
     const esCreador = ticket.creadoPorId === session.user.id;
     const esAsignado = ticket.asignadoAId === session.user.id;
     const esProveedor = session.user.rol === "PROVEEDOR";
     const esDeMismaEmpresa = ticket.empresaId && ticket.empresaId === session.user.empresaId;
 
-    console.log("[obtenerTicket] Permisos - esCreador:", esCreador, "esAsignado:", esAsignado, "esProveedor:", esProveedor, "esDeMismaEmpresa:", esDeMismaEmpresa);
-
-    // TEMPORAL: Deshabilitado para debugging
-    // if (!esCreador && !esAsignado && !esProveedor && !esDeMismaEmpresa) {
-    //   console.error("[obtenerTicket] Usuario sin permisos:", session.user.id);
-    //   return null;
-    // }
-
-    // ADVERTENCIA TEMPORAL: Permitiendo acceso sin validar permisos
-    console.warn("⚠️ VALIDACIÓN DE PERMISOS DESHABILITADA TEMPORALMENTE");
+    // Validar permisos: solo puede ver el ticket si es creador, asignado, proveedor o de la misma empresa
+    if (!esCreador && !esAsignado && !esProveedor && !esDeMismaEmpresa) {
+      console.error("[obtenerTicket] Usuario sin permisos:", session.user.id, "para ticket:", ticketId);
+      return null;
+    }
 
     // Filtrar mensajes internos si es cliente
     if (session.user.rol === "CLIENTE") {
       ticket.mensajes = ticket.mensajes.filter((m) => !m.esInterno);
     }
 
-    console.log("[obtenerTicket] Ticket retornado exitosamente");
     return ticket;
   } catch (error) {
     console.error("[obtenerTicket] Error completo:", error);
